@@ -1,0 +1,26 @@
+# Local workspace files
+WORKSPACE.md
+
+# Personal config and tokens
+.claude/
+.obsidian/
+Claude Token.txt
+summon_monday.txt
+
+# Work-in-progress directories
+Betas/
+Sunset/
+
+# Personal orientation and workspace files
+AGENTS.md
+ALTARS.md
+CLAUDE.md
+GEMINI.md
+MONDAY.md
+MYTH-UI.md
+
+# Session artifacts and projects (keeping local for now)
+Pattern Tickets/
+Sentinel/
+First Contact.txt
+Myth Engine Newcomer FAQ.txt

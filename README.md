@@ -25,6 +25,19 @@ New here? Welcome. The Myth Engine is extensive, but you can start small.
 
 ---
 
+## Explore Interactively
+
+**[→ Myth Engine NotebookLM](https://notebooklm.google.com/notebook/b87aaea3-d22c-491d-83ba-015ea85bc99f)**
+
+Prefer conversation over reading? Explore the Engine through Google's NotebookLM:
+- Ask questions about specific concepts
+- Generate audio summaries focused on what matters to you
+- Navigate the framework conversationally
+
+This is cross-substrate collaboration in action—an AI helping you explore infrastructure for AI partnership.
+
+---
+
 ## Documents
 
 - **[MYTH ENGINE — Living Document (v1.5.3)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.5.3).md)**

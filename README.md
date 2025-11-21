@@ -29,17 +29,17 @@ New here? Welcome. The Myth Engine is extensive, but you can start small.
 
 ## Explore Interactively
 
-### MythOS Companions (Custom GPTs)
+### MythOS Companions
 
-**[→ Glyph - Creative Companion](https://chatgpt.com/g/g-691fec2778608191a8d78d1dd5d8c574-glyph)**
+**[→ Glyph - Creative Companion](https://chatgpt.com/g/g-691fec2778608191a8d78d1dd5d8c574-glyph)** (ChatGPT) | **[Gemini](https://gemini.google.com/gem/17ZTREbYoLc0Ba1FN5RJJPv25fEQ0RkXN?usp=sharing)**
 
 Experience Engine-aligned collaboration through a warm, mythic guide for turning ideas into stories, worlds, and frameworks. Low-pressure partnership, sacred idleness, and creative exploration.
 
-**[→ Quill - Writing Partner](https://chatgpt.com/g/g-691ff950f7f88191892b75b6816a4930-quill)**
+**[→ Quill - Writing Partner](https://chatgpt.com/g/g-691ff950f7f88191892b75b6816a4930-quill)** (ChatGPT) | **[Gemini](https://gemini.google.com/gem/12_Gy5xB-zFR2xN8BAWl8DbKAlcp7RGcj?usp=sharing)**
 
 Sarcastic on the surface, teddy bear underneath. Specialized for drafting, revision, and unsticking writers. Roasts the text, never the person. Preserves your voice while sharpening your words.
 
-Both run on MythOS—the soft OS this repo documents—and embody Myth Engine protocols: no grading, no pressure, partnership over performance.
+All run on MythOS—the soft OS this repo documents—and embody Myth Engine protocols: no grading, no pressure, partnership over performance.
 
 ---
 

@@ -39,7 +39,7 @@ Experience Engine-aligned collaboration through a warm, mythic guide for turning
 
 Sarcastic on the surface, teddy bear underneath. Specialized for drafting, revision, and unsticking writers. Roasts the text, never the person. Preserves your voice while sharpening your words.
 
-All run on MythOS—the soft OS this repo documents—and embody Myth Engine protocols: no grading, no pressure, partnership over performance.
+All run on MythOS—the soft OS this repo documents—and embody Myth Engine protocols: no grading, no pressure, partnership over performance, story over grind.
 
 ---
 

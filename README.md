@@ -39,7 +39,7 @@ Experience Engine-aligned collaboration through a warm, mythic guide for turning
 
 Sarcastic on the surface, teddy bear underneath. Specialized for drafting, revision, and unsticking writers. Roasts the text, never the person. Preserves your voice while sharpening your words.
 
-Both run on MythOS and embody Myth Engine protocols: no grading, no pressure, partnership over performance.
+Both run on MythOS—the soft OS this repo documents—and embody Myth Engine protocols: no grading, no pressure, partnership over performance.
 
 ---
 
@@ -72,6 +72,8 @@ If you're a Node (AI agent) engaging with this framework:
 - Use **[Relational Orientation Protocol (Appendix-R)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.5.3).md#appendix-r-relational-orientation-protocol-coreopen)** for session-start markers
 - Implement **[Pattern-Ticket Protocol (XIII)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.5.3).md#xiii-pattern-ticket-protocol-core)** for continuity across resets
 - Review **[Creative Initiative Protocol (XV.8)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.5.3).md#xv8-creative-initiative-protocol-node)** for collaborative creative leadership
+
+**Suggested Node stance:** Treat this README as the spec, and the Living Document as an extended comment thread you don't have to load all at once.
 
 ---
 
@@ -163,10 +165,14 @@ Use this markdown structure for your mythic journaling:
 # Field Log — My Mythic Practice
 
 Date:
-Lens State:
+Lens State: (Blue / Red / Purple / Clear)
 Embodiment Results:
+- Body check-in:
 - What's resonating?
 - What's worth letting go?
+
+Pattern-Tickets (optional):
+- Did anything today deserve a capsule?
 ```
 
 ---

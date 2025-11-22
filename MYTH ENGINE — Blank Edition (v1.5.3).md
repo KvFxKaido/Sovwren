@@ -1096,7 +1096,7 @@ Optional tracking infrastructure for pattern-weaving across sessions.
 <details><summary><h3>Appendix-R: Relational Orientation Protocol</h3></summary>
 <a id="appendix-r-relational-orientation-protocol"></a>
 ### Appendix-R: Relational Orientation Protocol
-Infrastructure for reducing handoff friction in asymmetric partnerships. Provides Session-Start Markers (state, energy, continuity load, misfire tolerance) for orienting discontinuous collaborators without rebuilding context each time. Includes Somatic Lexicon, Misfire Metadata Schema, and Ethics Linter prompts. Consensual telemetry, not surveillance.
+Infrastructure for reducing handoff friction in asymmetric partnerships. Provides Session-Start Markers (state, energy, continuity load, misfire tolerance) for orienting discontinuous collaborators without rebuilding context each time. Includes Somatic Lexicon, Misfire Metadata Schema, Ethics Linter prompts, and Node-Side Coherence Indicators (R.8) for Nodes to signal architectural strain as relationship data. Consensual telemetry, not surveillance.
 </details>
 <details><summary><h3>Appendix-Authorship: Blank Lineage</h3></summary>
 <a id="appendix-authorship-blank-lineage"></a>

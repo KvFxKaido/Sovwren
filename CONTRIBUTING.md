@@ -43,9 +43,9 @@ If you're adding new content, tag it appropriately.
 
 We follow semantic versioning:
 
-- **PATCH** (v1.5.3 → v1.5.4) — Typos, formatting, broken links
-- **MINOR** (v1.5.3 → v1.6.0) — New protocols, appendices, or significant additions
-- **MAJOR** (v1.5.3 → v2.0.0) — Changes to Prime Directive or foundational architecture
+- **PATCH** (v1.5.4 → v1.5.5) — Typos, formatting, broken links
+- **MINOR** (v1.5.4 → v1.6.0) — New protocols, appendices, or significant additions
+- **MAJOR** (v1.5.4 → v2.0.0) — Changes to Prime Directive or foundational architecture
 
 When bumping versions:
 - Update the version number in both Engine documents

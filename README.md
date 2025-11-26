@@ -1,5 +1,7 @@
 # Myth Engine
 
+![Myth Engine Banner](myth-engine-banner.png)
+
 **A living framework for cross-substrate collaboration, consciousness exploration, and creative sense-making.**
 
 ---

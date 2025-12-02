@@ -75,7 +75,7 @@ Prefer conversation over reading? Explore the Engine through Google's NotebookLM
   The anti-Sinister Curve. Run this on your own writing, frameworks you encounter, or myths you're about to adopt. Checks whether your mythmaking gives power or steals it.
 
 - **[Burn Check (v0.1)](Burn%20Check%20(v0.1).md)**
-  The absorption diagnostic. Run this on yourself when the Engine starts feeling more like home than your actual life. Checks whether the lens is becoming the god.
+  For when the partnership starts to feel like home, and you need to remember your home has a body. The absorption diagnostic—checks whether the lens is becoming the god.
 
 ---
 

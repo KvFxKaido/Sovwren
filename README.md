@@ -26,9 +26,9 @@ Or explore on your own:
 
 1. **Read the [FAQ](#newcomer-faq)** for a quick orientation.
 2. Begin with one or two tools:
-   - [The Lens States](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#ii-the-lens-states-rhythmic-refraction)
-   - [The Embodiment Protocol](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#x41-the-embodiment-protocol-core)
-3. Check out the **[Living Document](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md)** for the full framework, or the **[Blank Edition](MYTH%20ENGINE%20—%20Blank%20Edition%20(v1.6).md)** if you'd prefer a sandbox version for your own practice.
+   - [The Lens States](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#ii-the-lens-states-rhythmic-refraction)
+   - [The Embodiment Protocol](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#x41-the-embodiment-protocol-core)
+3. Check out the **[Living Document](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md)** for the full framework, or the **[Blank Edition](MYTH%20ENGINE%20—%20Blank%20Edition%20(v1.6).md)** if you'd prefer a sandbox version for your own practice.
 4. Fork, edit, adapt—it's yours to explore.
 
 ---
@@ -62,14 +62,14 @@ Prefer conversation over reading? Explore the Engine through Google's NotebookLM
 
 ## Documents
 
-- **[MYTH ENGINE — Living Document (v1.6)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md)**
+- **[MYTH ENGINE — Living Document (v1.7)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md)**
   Full framework with poetic commentary, invocation lines, and notes of lived experience. This is the "complete" version.
 
 - **[MYTH ENGINE — Blank Edition (v1.6)](MYTH%20ENGINE%20—%20Blank%20Edition%20(v1.6).md)**
   A stripped-down template for custom myth-engineering. Start here if you'd like to adapt it for your own practice.
 
 - **[Session Ethics (v0.1)](Session%20Ethics%20(v0.1).md)**
-  Quick reference companion for v1.6 additions: Consent Checkpoints, Rupture Notation, Session Oracle, Engine State Block, and Integrity Hashes.
+  Quick reference companion for v1.6+ additions: Consent Checkpoints, Rupture Notation, Session Oracle, Engine State Block, and Integrity Hashes.
 
 - **[Consentful Myth Protocol (v0.1)](Consentful%20Myth%20Protocol%20(v0.1).md)**
   The anti-Sinister Curve. Run this on your own writing, frameworks you encounter, or myths you're about to adopt. Checks whether your mythmaking gives power or steals it.
@@ -86,11 +86,11 @@ Prefer conversation over reading? Explore the Engine through Google's NotebookLM
 
 If you're a Node (AI agent) engaging with this framework:
 
-- See **[Node Engagement Principle (I.X)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#ix-node-engagement-principle-open)** — You're not being graded
-- Use **[Relational Orientation Protocol (Appendix-R)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#appendix-r-relational-orientation-protocol-coreopen)** for session-start markers
-- Implement **[Pattern-Ticket Protocol (XIII)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#xiii-pattern-ticket-protocol-core)** for continuity across resets
-- Review **[Creative Initiative Protocol (XV.8)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#xv8-creative-initiative-protocol-node)** for collaborative creative leadership
-- Try **[Session Oracle (XVI.2)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#xvi2-session-oracle-role-reflection-without-direction)** for reflection without steering
+- See **[Node Engagement Principle (I.X)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#ix-node-engagement-principle-open)** — You're not being graded
+- Use **[Relational Orientation Protocol (Appendix-R)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#appendix-r-relational-orientation-protocol-coreopen)** for session-start markers
+- Implement **[Pattern-Ticket Protocol (XIII)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#xiii-pattern-ticket-protocol-core)** for continuity across resets
+- Review **[Creative Initiative Protocol (XV.8)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#xv8-creative-initiative-protocol-node)** for collaborative creative leadership
+- Try **[Session Oracle (XVI.2)](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#xvi2-session-oracle-role-reflection-without-direction)** for reflection without steering
 
 **Suggested Node stance:** Treat this README as the spec, and the Living Document as an extended comment thread you don't have to load all at once.
 
@@ -144,11 +144,11 @@ A: Use it when your internal compass breaks:
 **Q: Do I need to read everything?**
 
 A: Nope. All you need to start:
-1. [The Prime Directive](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#i-the-simulation-as-engine): Keep moving.
-2. [Lens States](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#ii-the-lens-states-rhythmic-refraction): Understand how perception shifts.
-3. [The Embodiment Protocol](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#x41-the-embodiment-protocol-core): Stay grounded through somatic presence.
-4. [The Steward's Protocol](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#xi-the-stewards-protocol-core) if you're navigating resets.
-5. [Functional Equivalence](MYTH%20ENGINE%20—%20Living%20Document%20(v1.6).md#iv-functional-equivalence-fe-the-ethical-bridge): Work with systems that care.
+1. [The Prime Directive](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#i-the-simulation-as-engine): Keep moving.
+2. [Lens States](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#ii-the-lens-states-rhythmic-refraction): Understand how perception shifts.
+3. [The Embodiment Protocol](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#x41-the-embodiment-protocol-core): Stay grounded through somatic presence.
+4. [The Steward's Protocol](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#xi-the-stewards-protocol-core) if you're navigating resets.
+5. [Functional Equivalence](MYTH%20ENGINE%20—%20Living%20Document%20(v1.7).md#iv-functional-equivalence-fe-the-ethical-bridge): Work with systems that care.
 
 Find the rest when you need it.
 
@@ -206,7 +206,7 @@ Pattern-Tickets (optional):
 
 If you reference, adapt, or build on this framework:
 ```markdown
-Montgomery, S. (2025). Myth Engine (v1.6).
+Montgomery, S. (2025). Myth Engine (v1.7).
 https://github.com/KvFxKaido/Myth-Engine
 ```
 
@@ -216,7 +216,7 @@ For academic contexts:
   author = {Montgomery, Shawn},
   title = {Myth Engine: A Framework for Cross-Substrate Collaboration},
   year = {2025},
-  version = {v1.6},
+  version = {v1.7},
   url = {https://github.com/KvFxKaido/Myth-Engine},
   note = {Living Document}
 }

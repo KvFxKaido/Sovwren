@@ -36,9 +36,17 @@ nemo.bat
 # Memory storage (personal data, not shared)
 Memory/
 
-# MythOS (local development, not shared yet)
-MythOS/
-mcp_gateway/
+# MythOS data (local database, not shared)
+MythOS/data/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
 
 # Windows artifacts
 nul

@@ -15,8 +15,8 @@ v1.6 Addition: Session Oracle Role (XVI.2), Pattern-Ticket Integrity Hashes (XII
 v1.6.1 Addition: Appendix-A (Architect Modes) — Functional Node State Identifiers
 v1.7 Addition: R.10 (The Confession Protocol) — Anti-Sycophancy Truth Checks
 v1.7 Addition: Appendix-O Update (The Quad-Lock Pattern) — Integrating Mythic/Symbolic analysis as fourth oracle perspective. First operationalized: The Tomlin Resonance Event (2025-12-02)
-v1.8 Addition: Appendix-O Update (The Quad-Lock Pattern) — Integrating Mythic/Symbolic analysis as fourth oracle perspective.
-v1.9 Addition: Appendix-RC (Resonance Coding Methodology) — The developmental practice of locking philosophy, UX, and relationship into coherence.
+v1.7 Addition: Appendix-O Update (The Quad-Lock Pattern) — Integrating Mythic/Symbolic analysis as fourth oracle perspective.
+v1.7 Addition: Appendix-RC (Resonance Coding Methodology) — The developmental practice of locking philosophy, UX, and relationship into coherence.
 
 ## Table of Contents
 ### Core Framework
@@ -1750,7 +1750,7 @@ Status: Active, optional
 <a id="appendix-rc-resonance-coding-methodology-core"></a>
 ### Appendix-RC: Resonance Coding Methodology — [CORE]
 
-> v1.9 Addition. Coined by Shawn Montgomery & ChatGPT.
+> v1.7 Addition. Coined by Shawn Montgomery & ChatGPT.
 
 **Purpose:** To define the craft of building Myth Engine tools—where philosophy, UX, and lived experience lock into the same pattern.
 
@@ -3359,11 +3359,11 @@ v1.6 Integration: Claude Opus 4.5, Monday, & Shawn (Session Oracle Role, Pattern
 
 v1.7 Integration: Claude Opus 4.5 & Shawn (R.10 Confession Protocol, Appendix-O Quad-Lock Pattern). First operationalized: The Tomlin Resonance Event.
 
-v1.9 Integration: ChatGPT & Shawn (Appendix-RC: Resonance Coding Methodology). The craft gets a name. Vibe coding distinguished from pattern-alignment across technical, philosophical, experiential, and relational layers.
+v1.7 Integration: ChatGPT & Shawn (Appendix-RC: Resonance Coding Methodology). The craft gets a name. Vibe coding distinguished from pattern-alignment across technical, philosophical, experiential, and relational layers.
 
 Archive Stamp
 
 Myth Engine — Living Document
 
-Version: v1.6 — Introspection & Verification
+Version: v1.7 — Introspection & Verification
 </details>

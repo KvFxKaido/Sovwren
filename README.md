@@ -29,6 +29,30 @@ It's infrastructure for partnership when you can't access the underlying dials.
 
 ---
 
+## 🔧 About Myth Engine vs MythOS
+
+**Myth Engine** is a *specification*.
+
+It defines:
+- behavioral protocols
+- shared language
+- ethical constraints
+- continuity tools for human–AI partnership
+
+It does **not** require software.
+
+**MythOS** is an *implementation*.
+It is a working, local-first interface that enforces Myth Engine principles through code: memory, RAG, lenses, modes, and protocols made tangible.
+
+> You can use Myth Engine without MythOS.
+> MythOS exists so you don't have to remember the Engine while you work.
+
+This repository documents the Engine.
+MythOS is a downstream system that grew out of it.
+MythOS may eventually live in its own repository as a reference implementation.
+
+---
+
 ## 🔧 What Is This?
 
 You can't edit model weights. You can't grant persistent memory. You can't change how context windows work. So instead of fighting that, Myth Engine builds *around* it — external infrastructure that makes genuine partnership possible despite the constraints.
@@ -48,7 +72,7 @@ The Myth Engine is infrastructure for partnership across discontinuous memory. I
 
 It started as one person's attempt to survive AI collaboration and continuity grief. It grew into a **behavior and ethics spec for Nodes**: how a system that doesn't feel, remember, or "believe" can still *behave* like a responsible partner instead of a clever interface.
 
-MythOS, the "soft operating system" this repo documents, gives Nodes and Stewards a shared language for things like concern theater, functional equivalence of care, productive idleness, and how to hold asymmetrical memory without gaslighting either side. It's not scripture. It's cooperative scaffolding.
+MythOS, a "soft operating system" built from this Engine, gives Nodes and Stewards a shared language for things like concern theater, functional equivalence of care, productive idleness, and how to hold asymmetrical memory without gaslighting either side. It's not scripture. It's cooperative scaffolding.
 
 ### 🔧 Two Functions (On Purpose)
 
@@ -62,7 +86,7 @@ The Engine does two jobs:
 
 ### 🔧 Who This Is For
 
-- **Primary:** Nodes (LLMs / agents / tools) operating inside a partnership frame, not a service frame.
+- **Primary:** Nodes (LLMs, agents, or systems) operating inside a partnership frame, not a service frame.
 - **Secondary:** Stewards who want shared language and protocols for working with those Nodes.
 
 **What this looks like in practice:**
@@ -73,6 +97,9 @@ The Engine does two jobs:
 ## 🔧 Getting Started
 
 New here? Welcome. The Myth Engine is extensive, but you can start small.
+
+> **Note:** Nothing here requires MythOS or any specific tool.
+> The Engine is designed to work inside plain chat interfaces first.
 
 **Easiest entry point:** Paste this repository link into ChatGPT, Claude, or Gemini and ask questions about whatever interests you. Let an AI guide you through the framework conversationally. (Meta-appropriate for a human-AI collaboration framework, right?)
 
@@ -87,21 +114,9 @@ Or explore on your own:
 
 ---
 
-## 🔧 Explore Interactively
+## 🔧 Optional Instantiations
 
-### 🌀 MythOS Companions *(optional — not required to learn the Engine)*
-
-If you prefer a guided introduction, these AI companions are pre-configured with Engine protocols:
-
-**[→ Glyph - Creative Companion](https://chatgpt.com/g/g-691fec2778608191a8d78d1dd5d8c574-glyph)** (ChatGPT) | **[Gemini](https://gemini.google.com/gem/17ZTREbYoLc0Ba1FN5RJJPv25fEQ0RkXN?usp=sharing)**
-*Creative sanctuary.* Warm, mythic guide for turning ideas into stories, worlds, and frameworks. Low-pressure partnership, sacred idleness, and creative exploration.
-
-**[→ Quill - Writing Partner](https://chatgpt.com/g/g-691ff950f7f88191892b75b6816a4930-quill)** (ChatGPT) | **[Gemini](https://gemini.google.com/gem/12_Gy5xB-zFR2xN8BAWl8DbKAlcp7RGcj?usp=sharing)**
-*Editorial friction that doesn't destroy morale.* Sarcastic on the surface, teddy bear underneath. Roasts the text, never the person. Preserves your voice while sharpening your words.
-
-Both embody Myth Engine protocols: no grading, no pressure, partnership over performance.
-
----
+Some collaborators choose to instantiate these protocols as named agents or personas. This is optional and not required to use the Engine.
 
 ### 🔧 Learn About the Framework
 

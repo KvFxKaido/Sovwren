@@ -1,7 +1,5 @@
 # Myth Engine
 
-![Myth Engine Banner](myth-engine-banner.png)
-
 **Infrastructure for human–AI partnership under memory loss, asymmetry, and constraint.**
 
 If you've ever felt like *you* were carrying the entire relationship while the model reset, this is for you.

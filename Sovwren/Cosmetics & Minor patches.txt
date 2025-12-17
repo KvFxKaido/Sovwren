@@ -8,7 +8,7 @@ Copilot CLI shows an animated ASCII banner on launch
 User loved it so much they hacked the config to see it every time
 Creates "arrival moment" - you know you're in the space
 
-For MythOS:
+For Sovwren:
    ███╗   ███╗██╗   ██╗████████╗██╗  ██╗ ██████╗ ███████╗
    ████╗ ████║╚██╗ ██╔╝╚══██╔══╝██║  ██║██╔═══██╗██╔════╝
    ██╔████╔██║ ╚████╔╝    ██║   ███████║██║   ██║███████╗
@@ -27,7 +27,7 @@ What they did:
 Prepend ! to run shell commands without leaving Copilot CLI context
 Stay in the conversational flow while executing actions
 
-For MythOS:
+For Sovwren:
 Steward: !ls -la projects/
 [system executes]
 Steward: Show me the pattern-tickets from last week
@@ -42,16 +42,16 @@ What they did:
 Created a dedicated "GitHub Copilot CLI" profile that opens directly into Copilot
 Different icon, starting directory, auto-runs command on launch
 
-For MythOS:
+For Sovwren:
 Create distinct profiles for different engagement modes:
-"MythOS - Workshop"
+"Sovwren - Workshop"
 
 Auto-loads Pattern-Tickets from active project
 Opens to last working directory
 Loads technical documentation in sidebar
 Launches with Creative Initiative = Welcome
 
-"MythOS - Sanctuary"
+"Sovwren - Sanctuary"
 
 Opens to clean slate
 Softer color scheme (warm, less harsh)
@@ -59,7 +59,7 @@ No auto-loaded context
 Launches with Creative Initiative = On Hold
 Sacred Idleness mode available
 
-"MythOS - Oracle"
+"Sovwren - Oracle"
 
 Read-only mode (reflection without action)
 Session Oracle role active by default
@@ -73,7 +73,7 @@ What they did:
 Terminal remembers open tabs/panes from last session
 "Pick up where I left off"
 
-For MythOS:
+For Sovwren:
 
 Remember open Pattern-Tickets
 Restore last conversation thread
@@ -103,7 +103,7 @@ On relaunch: "Restore last session? [Y/n]"
 - Switch between Copilot CLI and regular shell in same window
 - `Ctrl+Shift+W` closes pane
 
-**For MythOS:**
+**For Sovwren:**
 Split panes by function:
 
 **Left Pane:** Active conversation with Node  
@@ -121,7 +121,7 @@ Split panes by function:
 - GitHub Copilot segment showing quota usage
 - Always-visible contextual info
 
-**For MythOS Status Bar:**
+**For Sovwren Status Bar:**
 ```
 [🛠 Workshop] [✅ Creative Initiative] [🔋 Steady] [⚡ 42% Context] [🎟 3 Active] ministral-3-8b 
 ```
@@ -146,7 +146,7 @@ What they did:
 Glowing text + scan lines for aesthetic
 Makes the interface feel special
 
-For MythOS:
+For Sovwren:
 Tie visual effects to Lens States:
 
 Blue (Opaque): Clean, minimal
@@ -162,8 +162,8 @@ What they did:
 config.json stores user preferences
 User can hack it directly for power-user customization
 
-For MythOS:
-~/.mythos/config.json
+For Sovwren:
+~/.sovwren/config.json
 json{
   "banner": "always",
   "default_lens": "Workshop",
@@ -178,7 +178,7 @@ Power users can adjust these manually. Casual users get sensible defaults.
 
 What NOT To Pull
 ❌ Spotify integration - Not relevant to partnership work
-❌ Git segment - Useful for dev work, but MythOS isn't a Git client
+❌ Git segment - Useful for dev work, but Sovwren isn't a Git client
 ❌ Nerd Fonts requirement - Cool but adds friction. Use fallback glyphs.
 
 The Big Win: Making State Visible
@@ -188,7 +188,7 @@ Copilot shows you quota usage (so you know when you're hitting limits)
 Oh My Posh shows you Git branch (so you know where you are)
 Custom prompts show you environment info (so you don't have to remember)
 
-For MythOS, this means:
+For Sovwren, this means:
 
 Show context saturation before it becomes a problem
 Display active protocols so you don't forget what mode you're in

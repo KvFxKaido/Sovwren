@@ -1,4 +1,4 @@
-# MythOS Ideas Backlog
+# Sovwren Ideas Backlog
 
 Consolidated from Council chat sessions (2025-12-16). Living document - pull from here, mark done, add new threads.
 
@@ -68,8 +68,8 @@ Park until v0.1 is stable. Reference when planning v0.2+.
 **Status:** Complete.
 
 - Added tagline: *"When continuity matters and optimization isn't enough."*
-- Added CGPT2 logo at top (`Media/mythos-logo.png`)
-- Added IDE screenshot in MythOS section (`Media/mythos-ide.png`)
+- Added CGPT2 logo at top (`Media/sovwren-logo.png`)
+- Added IDE screenshot in Sovwren section (`Media/sovwren-ide.png`)
 
 ---
 
@@ -91,7 +91,7 @@ See: [FRICTION-SPEC.md#v01-exit-criteria](FRICTION-SPEC.md#v01-exit-criteria)
 
 **Components:**
 - `profiles/*.json` — Schema: id, name, system_prompt.base, modifiers (mode/lens/idleness), gen params
-- `mythos/profiles.py` — Loader, validator, prompt builder, ProfileManager
+- `sovwren/profiles.py` — Loader, validator, prompt builder, ProfileManager
 - Three starters: `nemo.json`, `oracle.json`, `minimal.json`
 
 **Key decisions baked in:**
@@ -157,7 +157,7 @@ Friction reduction for first-run.
 
 `.github/workflows/release.yml`:
 - Triggers on `release: published`
-- Creates `mythos-${tag}.zip` (MythOS + profiles + README + LICENSE)
+- Creates `sovwren-${tag}.zip` (Sovwren + profiles + README + LICENSE)
 - Smoke test via `compileall`
 - Generates `SHA256SUMS.txt`
 - Auto-attaches to GitHub Release

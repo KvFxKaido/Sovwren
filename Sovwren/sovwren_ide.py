@@ -25,7 +25,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Add project root to path for imports
-project_root = Path(__file__).parent          # .../MythOS
+project_root = Path(__file__).parent          # .../Sovwren
 workspace_root = project_root.parent          # .../MythEngine
 sys.path.insert(0, str(project_root))
 
@@ -630,7 +630,7 @@ class NeuralStream(ScrollableContainer):
         # Show themed ASCII art on startup
         from config import get_themed_ascii, DEFAULT_THEME
         yield Static(get_themed_ascii(DEFAULT_THEME), classes="message system")
-        yield Static("[dim]MythOS initialized. Connecting to Node...[/dim]", classes="message system")
+        yield Static("[dim]Sovwren initialized. Connecting to Node...[/dim]", classes="message system")
 
     def add_message(self, content: str, role: str = "system"):
         """Add a message to the stream."""
@@ -996,7 +996,7 @@ class MythIDE(App):
         yield Footer()
 
     async def on_mount(self) -> None:
-        self.title = "MythOS IDE v0.1"
+        self.title = "Sovwren IDE v0.1"
         self.sub_title = "Partnership-First Interface"
 
         # Set initial mode for border color
@@ -1568,7 +1568,7 @@ class MythIDE(App):
 
         except ImportError as e:
             stream.add_message(f"[red]Import error: {e}[/red]", "error")
-            stream.add_message("[dim]Make sure you're running from MythOS directory.[/dim]", "system")
+            stream.add_message("[dim]Make sure you're running from Sovwren directory.[/dim]", "system")
             status.update_status(False)
         except Exception as e:
             stream.add_message(f"[red]Connection error: {e}[/red]", "error")
@@ -1905,7 +1905,7 @@ class MythIDE(App):
     async def on_directory_tree_file_selected(self, event) -> None:
         """Handle file selection in the workspace tree.
 
-        Design principle: 'MythOS doesn't open files. Files open MythOS behaviors.'
+        Design principle: 'Sovwren doesn't open files. Files open Sovwren behaviors.'
         - Preview file content
         - Add to context
         - Show mode/lens suggestion (non-forcing)
@@ -2062,7 +2062,7 @@ class MythIDE(App):
 Timestamp: {timestamp}
 
 ## 📁 Filed Under
-MythOS / Pattern Tickets / NeMo
+Sovwren / Pattern Tickets / NeMo
 """
         self.push_screen(TicketModal(template), self.finalize_ticket_weave)
 
@@ -2121,7 +2121,7 @@ Output ONLY valid JSON."""
             timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
             filename = f"Ticket_{timestamp}.md"
             
-            # Ensure directory exists (save to MythOS/Pattern Tickets/)
+            # Ensure directory exists (save to Sovwren/Pattern Tickets/)
             save_dir = project_root / "Pattern Tickets" / "NeMo"
             save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -2131,7 +2131,7 @@ Output ONLY valid JSON."""
                 f.write(content)
 
             stream.add_message(f"[green]Pattern Ticket woven: {filename}[/green]", "system")
-            stream.add_message(f"[dim]Saved to MythOS/{save_dir.relative_to(project_root)}[/dim]", "system")
+            stream.add_message(f"[dim]Saved to Sovwren/{save_dir.relative_to(project_root)}[/dim]", "system")
 
             # Log event
             asyncio.create_task(self._log_event("pattern_ticket_created", {"filename": filename, "path": str(file_path)}))

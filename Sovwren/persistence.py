@@ -1,4 +1,4 @@
-# path: mythos/persistence.py
+# path: sovwren/persistence.py
 # Python 3.10+
 #
 # v0.2 PARKED: Full conversation persistence layer (Code Pilot design)
@@ -448,8 +448,8 @@ def _state_payload(state: EngineState) -> Dict[str, Any]:
 # ---- tiny manual test -------------------------------------------------------
 
 if __name__ == "__main__":
-    # Minimal CLI smoke test (run: python -m mythos.persistence)
-    db = MythDB(Path.cwd() / ".mythos" / "mythos.db")
+    # Minimal CLI smoke test (run: python -m sovwren.persistence)
+    db = MythDB(Path.cwd() / ".sovwren" / "sovwren.db")
     sess = db.begin_session(
         project_root=Path.cwd(),
         node=NodeInfo(name="NeMo", provider="LM Studio", model="ministral-3-8b-reasoning-2512"),

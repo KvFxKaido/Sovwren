@@ -10,7 +10,7 @@ function App() {
   const [apiKeys, setApiKeys] = useState({});
 
   useEffect(() => {
-    const savedKeys = localStorage.getItem('mythos_api_keys');
+    const savedKeys = localStorage.getItem('sovwren_api_keys');
     if (savedKeys) {
       setApiKeys(JSON.parse(savedKeys));
     }
@@ -26,7 +26,7 @@ function App() {
               <span className="font-bold text-white text-lg">M</span>
             </div>
             <span className="font-bold text-white text-lg tracking-tight">
-              MythOS
+              Sovwren
             </span>
           </div>
           <div className="h-6 w-px bg-white/10 mx-2" />

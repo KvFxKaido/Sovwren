@@ -1,4 +1,4 @@
-# MythOS Council Status
+# Sovwren Council Status
 
 **Last updated:** 2025-12-16 (Session 6 — Tier 1 Complete)
 **Phase:** v0.1 — Stable (Tier 1 complete, interface polish locked)
@@ -9,7 +9,7 @@
 |---------|--------|------|
 | Textual TUI | Running | sovwren_ide.py stable under Textual |
 | Local Model | Connected | Hot-swappable via F2; LM Studio + Ollama backends |
-| Python Backend | Active | MythOS backend + NeMo core integrated |
+| Python Backend | Active | Sovwren backend + NeMo core integrated |
 | RAG System | Live | Auto-indexes MythEngine workspace on first run |
 | Memory System | Wired | Direct file access (no MCP dependency) |
 | Node Tone | Tuned | Casual presence, single-image answers |
@@ -103,7 +103,7 @@ Done (v0.1 — Implemented)
 
  Sacred Idleness mode icon override — 🕯 replaces mode icon when idle (Claude Opus 4.5)
 
- MythOS/Pattern Tickets/ folder created — local ticket storage ready (Claude Opus 4.5)
+ Sovwren/Pattern Tickets/ folder created — local ticket storage ready (Claude Opus 4.5)
 
  Sanctuary Response Style Spec v0.1 — 7-rule behavioral spec for terminal, decompressive responses (Creative Director → Claude Opus 4.5)
 
@@ -113,7 +113,7 @@ Done (v0.1 — Implemented)
 
  Prompt loosening fix — varied framing options (no more "Functionally" repetition), metaphor engagement rule (riff on Steward's metaphors, don't replace) (Claude Opus 4.5)
 
- File opening system — "Files open MythOS behaviors" (Creative Director design → Claude Opus 4.5 implementation)
+ File opening system — "Files open Sovwren behaviors" (Creative Director design → Claude Opus 4.5 implementation)
    - File-type → Mode/Lens suggestion mappings in config.py
    - Enter-to-preview: loads file, shows preview, updates context, shows suggestion
    - OS handoff: Ctrl+O opens selected file in system editor
@@ -170,7 +170,7 @@ Done (v0.1 — Implemented)
    - Added `symbolic_recursion` and `is_threshold` boolean fields
    - Symbolic commitment checkboxes now auto-filled by NeMo
    - Weaving guard prevents rapid-click button spam
-   - Pattern Tickets now save to MythOS/Pattern Tickets/NeMo/
+   - Pattern Tickets now save to Sovwren/Pattern Tickets/NeMo/
    - ✅ Validated working (2025-12-15)
 
  UI density pass — real estate reclamation (Claude Opus 4.5)
@@ -257,7 +257,7 @@ Done (v0.1 — Implemented)
  README tone shift (Claude Opus 4.5)
    - New tagline: "When continuity matters and optimization isn't enough."
    - Added CGPT2 logo at top (resized to 400px)
-   - Added IDE screenshot in MythOS section (resized to 1200px)
+   - Added IDE screenshot in Sovwren section (resized to 1200px)
    - Images stored in `Media/` folder
 
  v0.1 exit criteria — FRICTION-SPEC.md v0.5 (Claude Opus 4.5)
@@ -359,7 +359,7 @@ Parked (v0.2+ — Explicitly Deferred)
    - Explicit separation: Core Engine / Interface Layer / Persona Layer
    - Suggested structure:
      ```
-     mythos/
+     sovwren/
        core/         # rag.py, memory.py, context.py, modes.py
        interface/    # tui/, api/ (FastAPI later)
        profiles/     # nemo.json, oracle.json, minimal.json
@@ -368,9 +368,9 @@ Parked (v0.2+ — Explicitly Deferred)
    - Deferred because: "Flat repo structure — patterns before architecture" (Decision Log)
 
  **FastAPI Service Layer** (Path C from Full Stack GPT)
-   - Expose MythOS as HTTP API: `/session`, `/message`, `/lens`, `/mode`, `/sacred-idleness`
-   - Enables: Discord bot, other LLMs calling MythOS as service, scripting/automation
-   - Positions MythOS as infrastructure, not just an app
+   - Expose Sovwren as HTTP API: `/session`, `/message`, `/lens`, `/mode`, `/sacred-idleness`
+   - Enables: Discord bot, other LLMs calling Sovwren as service, scripting/automation
+   - Positions Sovwren as infrastructure, not just an app
    - Deferred because: v0.1 focus is friction removal, not distribution
 
  **Profile Generation Parameters** (Full Stack GPT suggestion)
@@ -424,7 +424,7 @@ Date	Decision	Rationale
 2025-12-14	Lenses signal Steward state, not system capability	Design principle locked; lenses adjust care/structure/synthesis needed, not intelligence level
 2025-12-14	Metaphor engagement rule	Riff on Steward's metaphors, don't replace; collaboration over correction
 2025-12-14	Varied framing options	Removed "Functionally" repetition; multiple opener options to prevent template feel
-2025-12-14	File opening = presence, not execution	"MythOS doesn't open files. Files open MythOS behaviors." Suggestions, not overrides.
+2025-12-14	File opening = presence, not execution	"Sovwren doesn't open files. Files open Sovwren behaviors." Suggestions, not overrides.
 2025-12-14	Mode visual state = accents only	State legibility, not theming; "If it looks cool, it's wrong" (Monday constraint)
 2025-12-14	Splash screen = threshold moment	Profile-specific art ready for future profile system; dismisses on any key
 2025-12-14	NeMo block-style ASCII art	Clean geometric style chosen over curved; consistent with terminal aesthetic
@@ -439,7 +439,7 @@ Date	Decision	Rationale
 2025-12-15	Gold reserved for commitment actions	"Gold never stacks" — Weave Ticket only; distinct from mode colors
 2025-12-15	Button state = visual truth	Active class tracks actual state; no misleading static highlights
 2025-12-15	Cosmetics rule: "Did this make me notice the interface less?"	If yes → keep; if no → revert (Creative Director)
-2025-12-15	MythOS v0.1 declared stable	"Nothing lies. Nothing begs. Nothing explains itself twice." — finished enough to protect
+2025-12-15	Sovwren v0.1 declared stable	"Nothing lies. Nothing begs. Nothing explains itself twice." — finished enough to protect
 2025-12-15	Theme command filtered from palette	Preserve AMOLED integrity; built-in theme switcher could break careful color work
 2025-12-15	Message colors: Node purple, Steward white	Visual partnership distinction; purple for NeMo reinforces Sanctuary/synthesis association
 2025-12-15	"Forget:" command rejected	Direct manipulation (or file edit) over command parsing; "Forget about X" risks accidental triggers

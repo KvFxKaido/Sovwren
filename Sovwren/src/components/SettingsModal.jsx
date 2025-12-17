@@ -10,7 +10,7 @@ export default function SettingsModal({ isOpen, onClose }) {
 
     useEffect(() => {
         if (isOpen) {
-            const savedKeys = localStorage.getItem('mythos_api_keys');
+            const savedKeys = localStorage.getItem('sovwren_api_keys');
             if (savedKeys) {
                 setKeys(JSON.parse(savedKeys));
             }
@@ -18,7 +18,7 @@ export default function SettingsModal({ isOpen, onClose }) {
     }, [isOpen]);
 
     const handleSave = () => {
-        localStorage.setItem('mythos_api_keys', JSON.stringify(keys));
+        localStorage.setItem('sovwren_api_keys', JSON.stringify(keys));
         onClose();
     };
 

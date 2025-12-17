@@ -4,7 +4,7 @@ import { sendMessage } from '../services/api';
 
 export default function ChatInterface({ currentModel, apiKeys }) {
     const [messages, setMessages] = useState([
-        { role: 'assistant', content: 'Welcome to MythOS. Select a model and let\'s begin.' }
+        { role: 'assistant', content: 'Welcome to Sovwren. Select a model and let\'s begin.' }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);

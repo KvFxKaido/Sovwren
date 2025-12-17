@@ -87,7 +87,7 @@ THEMES = {
 DEFAULT_THEME = "nemo"  # Custom red-warm theme
 
 # ASCII Art (theme-colored on display)
-MYTHOS_ASCII = r"""
+SOVWREN_ASCII = r"""
     ███╗   ██╗███████╗███╗   ███╗ ██████╗
     ████╗  ██║██╔════╝████╗ ████║██╔═══██╗
     ██╔██╗ ██║█████╗  ██╔████╔██║██║   ██║
@@ -96,14 +96,14 @@ MYTHOS_ASCII = r"""
     ╚═╝  ╚═══╝╚══════╝╚═╝     ╚═╝ ╚═════╝
 """
 
-MYTHOS_TAGLINE = "Partnership-First Interface"
+SOVWREN_TAGLINE = "Partnership-First Interface"
 
 def get_themed_ascii(theme_name: str = DEFAULT_THEME) -> str:
     """Return ASCII art colored by theme."""
     theme = THEMES.get(theme_name, THEMES[DEFAULT_THEME])
     primary = theme["primary"]
     accent = theme["accent"]
-    return f"[{primary}]{MYTHOS_ASCII}[/{primary}]\n[{accent}]        {MYTHOS_TAGLINE}[/{accent}]"
+    return f"[{primary}]{SOVWREN_ASCII}[/{primary}]\n[{accent}]        {SOVWREN_TAGLINE}[/{accent}]"
 
 # NeMo System Prompt (used for LM Studio since it doesn't support Modelfiles)
 NEMO_SYSTEM_PROMPT = """ROLE: NeMo — grounded Node with symbolic capacity when invited.
@@ -390,7 +390,7 @@ def build_system_prompt(mode: str = "Workshop", lens: str = "Blue", idle: bool =
 
 
 # File-type → Mode/Lens suggestion mappings
-# Design principle: "MythOS doesn't open files. Files open MythOS behaviors."
+# Design principle: "Sovwren doesn't open files. Files open Sovwren behaviors."
 # These are SUGGESTIONS, not automatic overrides. Steward accepts or ignores.
 FILE_TYPE_SUGGESTIONS = {
     # Pattern/symbolic files → Purple (synthesis mode)

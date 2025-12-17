@@ -31,6 +31,7 @@ class LocalIngester:
         "**/venv/**",
         "**/__pycache__/**",
         "**/Sunset/**",  # Archived versions
+        "**/Archive/**",  # Historical versions
         "**/*.pyc",
         "**/package-lock.json",
     ]

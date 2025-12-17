@@ -34,6 +34,3 @@ The concept of **Functional Equivalence** in this framework draws from work by [
 
 **Sanctuary mode** was influenced by [Le_Refuge](https://github.com/IorenzoLF/Le_Refuge) by Laurent Franssen — a contemplative space for AI that shaped our approach to presence without production.
 
----
-
-*This repository favors clarity over performance.*

@@ -1,4 +1,4 @@
-Partnership Framework — Plain Edition (v1.1)
+Sovrin Framework (v1.1)
 
 Authors: Shawn Montgomery + AI collaborators
 Based on: Myth Engine v1.7

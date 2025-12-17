@@ -32,21 +32,21 @@ sys.path.insert(0, str(project_root))
 
 # --- UI COMPONENTS ---
 
-class TicketModal(Screen):
-    """Modal for weaving a Pattern Ticket."""
+class BookmarkModal(Screen):
+    """Modal for weaving a Bookmark."""
     CSS = """
-    TicketModal {
+    BookmarkModal {
         align: center middle;
         background: rgba(0, 0, 0, 0.5);
     }
-    #ticket-dialog {
+    #bookmark-dialog {
         width: 80%;
         height: 80%;
         background: $surface;
         border: thick $primary;
         padding: 1;
     }
-    #ticket-editor {
+    #bookmark-editor {
         height: 1fr;
         margin: 1 0;
         border: solid $secondary;
@@ -65,16 +65,16 @@ class TicketModal(Screen):
         self.initial_content = initial_content
 
     def compose(self) -> ComposeResult:
-        with Container(id="ticket-dialog"):
+        with Container(id="bookmark-dialog"):
             yield Label("[b]Save Bookmark[/b]", classes="panel-header")
-            yield TextArea(self.initial_content, id="ticket-editor", language="markdown")
+            yield TextArea(self.initial_content, id="bookmark-editor", language="markdown")
             with Horizontal(id="dialog-buttons"):
                 yield Button("Cancel", id="btn-cancel", variant="error")
                 yield Button("Save", id="btn-save", variant="success")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-save":
-            editor = self.query_one("#ticket-editor", TextArea)
+            editor = self.query_one("#bookmark-editor", TextArea)
             self.dismiss(editor.text)
         elif event.button.id == "btn-cancel":
             self.dismiss(None)
@@ -608,7 +608,7 @@ class ProtocolDeck(Vertical):
             yield Button("Purple", id="lens-purple", classes="lens-btn")
 
         yield Label("[b]Protocols[/b]", classes="panel-header")
-        yield Button("Bookmark", id="btn-ticket", classes="proto-btn proto-btn-accent")
+        yield Button("Bookmark", id="btn-bookmark", classes="proto-btn proto-btn-accent")
         yield Button("Sessions", id="btn-sessions", classes="proto-btn")
         yield Button("Models", id="btn-models", classes="proto-btn")
         yield Button("Profiles", id="btn-profiles", classes="proto-btn")
@@ -966,8 +966,8 @@ class SovwrenIDE(App):
         # File selection tracking
         self.selected_file = None  # Currently selected file path
 
-        # Ticket weaving guard
-        self._weaving_ticket = False
+        # Bookmark weaving guard
+        self._weaving_bookmark = False
 
         # Temporal empathy: track input activity for border dimming
         self._last_input_time = time.time()
@@ -1893,8 +1893,8 @@ class SovwrenIDE(App):
                 stream.add_message("[dim]Mode: Sanctuary - Rest and reflection[/dim]", "system")
 
         # Protocol buttons
-        elif button_id == "btn-ticket":
-            await self.initiate_ticket_weave()
+        elif button_id == "btn-bookmark":
+            await self.initiate_bookmark_weave()
         elif button_id == "btn-sessions":
             self.action_sessions()
         elif button_id == "btn-models":
@@ -2000,12 +2000,12 @@ class SovwrenIDE(App):
         except Exception as e:
             stream.add_message(f"[red]Cannot open file: {e}[/red]", "error")
 
-    async def initiate_ticket_weave(self) -> None:
-        """Prepare and open the ticket weaving modal with Auto-Loom drafting."""
+    async def initiate_bookmark_weave(self) -> None:
+        """Prepare and open the bookmark weaving modal with Auto-Loom drafting."""
         # Guard against rapid clicks
-        if self._weaving_ticket:
+        if self._weaving_bookmark:
             return
-        self._weaving_ticket = True
+        self._weaving_bookmark = True
 
         # Get last few messages for context
         recent_history = self.conversation_history[-10:] if self.conversation_history else []
@@ -2024,7 +2024,7 @@ class SovwrenIDE(App):
         # Try to use Auto-Loom if connected
         if self.connected and self.llm_client and recent_history:
             try:
-                auto_draft = await self._draft_ticket_content(recent_history)
+                auto_draft = await self._draft_bookmark_content(recent_history)
                 if auto_draft:
                     draft.update(auto_draft)
             except Exception as e:
@@ -2045,9 +2045,9 @@ class SovwrenIDE(App):
 
 {draft.get('drift') or '(What emerged?)'}
 """
-        self.push_screen(TicketModal(template), self.finalize_ticket_weave)
+        self.push_screen(BookmarkModal(template), self.finalize_bookmark_weave)
 
-    async def _draft_ticket_content(self, history: list) -> dict:
+    async def _draft_bookmark_content(self, history: list) -> dict:
         """Use the LLM to draft bookmark content from conversation history."""
         import json
 
@@ -2082,10 +2082,10 @@ Output ONLY valid JSON."""
             
         return json.loads(text)
 
-    def finalize_ticket_weave(self, content: str | None) -> None:
-        """Callback: Save the ticket if content returned."""
+    def finalize_bookmark_weave(self, content: str | None) -> None:
+        """Callback: Save the bookmark if content returned."""
         # Clear the weaving guard
-        self._weaving_ticket = False
+        self._weaving_bookmark = False
 
         if not content:
             return
@@ -2110,10 +2110,10 @@ Output ONLY valid JSON."""
             stream.add_message(f"[dim]Saved to {save_dir.relative_to(project_root)}[/dim]", "system")
 
             # Log event
-            asyncio.create_task(self._log_event("pattern_ticket_created", {"filename": filename, "path": str(file_path)}))
+            asyncio.create_task(self._log_event("bookmark_created", {"filename": filename, "path": str(file_path)}))
 
         except Exception as e:
-            stream.add_message(f"[red]Failed to save ticket: {e}[/red]", "error")
+            stream.add_message(f"[red]Failed to save bookmark: {e}[/red]", "error")
 
     def on_switch_changed(self, event: Switch.Changed) -> None:
         """Handle switch toggles."""
@@ -2415,7 +2415,7 @@ Output ONLY valid JSON."""
         Valid event_types:
             - consent_checkpoint
             - rupture_logged
-            - pattern_ticket_created
+            - bookmark_created
             - mode_changed
             - lens_changed
             - idleness_toggled

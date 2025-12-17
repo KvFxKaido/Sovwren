@@ -2,7 +2,7 @@
 
 Scans workspace directories and ingests markdown/text files into the RAG system.
 Designed for the symbolic corpus vision from RAG-ROADMAP.md:
-- Pattern Tickets
+- Bookmarks
 - Framework protocols
 - Session logs
 - Lore documents
@@ -88,8 +88,8 @@ class LocalIngester:
         # Detect document type from path
         rel_path = str(file_path.relative_to(self.workspace_root)).lower()
 
-        if "pattern ticket" in rel_path or "pattern-ticket" in rel_path:
-            metadata["doc_type"] = "pattern_ticket"
+        if "bookmark" in rel_path:
+            metadata["doc_type"] = "bookmark"
         elif "sovwren framework" in rel_path or "sovwren-framework" in rel_path:
             metadata["doc_type"] = "framework"
         elif "claude" in rel_path or "gemini" in rel_path or "agents" in rel_path:
@@ -97,9 +97,9 @@ class LocalIngester:
         else:
             metadata["doc_type"] = "general"
 
-        # Try to extract Pattern-Ticket specific metadata
-        if metadata["doc_type"] == "pattern_ticket":
-            metadata.update(self._extract_ticket_metadata(content))
+        # Try to extract bookmark-specific metadata
+        if metadata["doc_type"] == "bookmark":
+            metadata.update(self._extract_bookmark_metadata(content))
 
         # Extract title from first heading or filename
         title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
@@ -111,11 +111,11 @@ class LocalIngester:
 
         return metadata
 
-    def _extract_ticket_metadata(self, content: str) -> Dict:
-        """Extract Pattern-Ticket specific metadata."""
-        ticket_meta = {}
+    def _extract_bookmark_metadata(self, content: str) -> Dict:
+        """Extract bookmark-specific metadata."""
+        bookmark_meta = {}
 
-        # Look for common ticket fields
+        # Look for common bookmark fields
         patterns = {
             "seed": r'Seed:\s*["\']?(.+?)["\']?\s*$',
             "function": r'Function:\s*(.+?)(?:\n|$)',
@@ -130,11 +130,11 @@ class LocalIngester:
                 value = match.group(1).strip()
                 if field == "tags":
                     # Parse tag array
-                    ticket_meta[field] = [t.strip().strip('"\'') for t in value.split(",")]
+                    bookmark_meta[field] = [t.strip().strip('"\'') for t in value.split(",")]
                 else:
-                    ticket_meta[field] = value
+                    bookmark_meta[field] = value
 
-        return ticket_meta
+        return bookmark_meta
 
     async def ingest_file(self, file_path: Path) -> Optional[int]:
         """Ingest a single file into the RAG system."""
@@ -223,7 +223,7 @@ class LocalIngester:
         """Ingest the full Sovwren symbolic corpus.
 
         This follows the RAG-ROADMAP.md vision:
-        - Pattern Tickets
+        - Bookmarks
         - Framework protocols
         - Session logs
         - Lore documents
@@ -233,11 +233,11 @@ class LocalIngester:
         print("=" * 50)
 
         # Define corpus directories with their document types
-        # NOTE: Only NeMo's Pattern Tickets are ingested to avoid context bleed
-        # from Claude/Gemini/Ælya tickets that contain resolved issues or
+        # NOTE: Only NeMo's Bookmarks are ingested to avoid context bleed
+        # from Claude/Gemini/Ælya bookmarks that contain resolved issues or
         # entity-specific patterns NeMo shouldn't try to "help" with.
         corpus_dirs = [
-            ("Pattern Tickets/NeMo", ["**/*.txt", "**/*.md"]),
+            ("Bookmarks/NeMo", ["**/*.txt", "**/*.md"]),
             (".", ["Sovwren Framework.md", "CLAUDE.md", "GEMINI.md", "AGENTS.md"]),
         ]
 

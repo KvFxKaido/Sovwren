@@ -7,7 +7,7 @@
 # - Full session lifecycle (begin -> messages -> events -> end)
 # - Project + Node tracking (models as guests)
 # - Context snapshots per turn (RAG retrieval logging)
-# - Pattern tickets with integrity hashes
+# - Bookmarks with integrity hashes
 # - JSON export for portability
 #
 # For v0.1, we use the simpler protocol_events table in database.py.
@@ -31,7 +31,7 @@ Band = Literal["None", "Low", "Medium", "High", "Critical"]
 EventKind = Literal[
     "consent_checkpoint",
     "rupture_logged",
-    "pattern_ticket",
+    "bookmark",
     "state_changed",
     "context_transition",
 ]
@@ -261,9 +261,9 @@ class SovwrenDB:
             ticket_id = int(cur.lastrowid)
         self.log_event(
             session_id,
-            kind="pattern_ticket",
+            kind="bookmark",
             by="steward",
-            payload={"ticket_id": ticket_id},
+            payload={"bookmark_id": ticket_id},
         )
         return ticket_id
 

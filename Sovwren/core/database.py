@@ -104,7 +104,7 @@ class Database:
         """)
 
         # Protocol Events table (Code Pilot spec: store events, not interpretations)
-        # Stores: consent_checkpoint, rupture_logged, pattern_ticket_created,
+        # Stores: consent_checkpoint, rupture_logged, bookmark_created,
         #         mode_changed, lens_changed, idleness_toggled, context_band_transition
         await db.execute("""
             CREATE TABLE IF NOT EXISTS protocol_events (
@@ -391,7 +391,7 @@ class Database:
 
     # ==================== Protocol Event Logging ====================
     # Code Pilot spec: "Persist Protocol Events (Not Meanings)"
-    # Store: consent_checkpoint, rupture_logged, pattern_ticket_created,
+    # Store: consent_checkpoint, rupture_logged, bookmark_created,
     #        mode_changed, lens_changed, idleness_toggled, context_band_transition
     # Do NOT store: interpretations, summaries, emotional labels
 
@@ -403,7 +403,7 @@ class Database:
         Valid event_types:
             - consent_checkpoint
             - rupture_logged
-            - pattern_ticket_created
+            - bookmark_created
             - mode_changed
             - lens_changed
             - idleness_toggled
@@ -413,7 +413,7 @@ class Database:
             - mode_changed: {"from": "Workshop", "to": "Sanctuary"}
             - context_band_transition: {"from": "Medium", "to": "High"}
             - idleness_toggled: {"state": true}
-            - pattern_ticket_created: {"title": "...", "file": "..."}
+            - bookmark_created: {"title": "...", "file": "..."}
         """
         metadata_json = json.dumps(metadata) if metadata else None
 

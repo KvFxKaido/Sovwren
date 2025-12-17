@@ -127,7 +127,7 @@ class CommandHandler:
                     path = " ".join(command_args)
                     await self.cli.ingest_path(path)
                 else:
-                    # Default: ingest full MythEngine corpus
+                    # Default: ingest full Sovwren corpus
                     await self.cli.ingest_corpus()
 
             elif command == "ingest-corpus":

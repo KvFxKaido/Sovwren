@@ -526,14 +526,14 @@ class NeMoCLI:
             theme.print_error(f"Failed to save report: {e}")
 
     async def ingest_corpus(self):
-        """Ingest the full MythEngine corpus into RAG"""
+        """Ingest the full Sovwren corpus into RAG"""
         from rag.local_ingester import local_ingester
 
-        theme.print_status("Starting MythEngine corpus ingestion...", "info")
+        theme.print_status("Starting Sovwren corpus ingestion...", "info")
         theme.print_info("This may take a few minutes depending on corpus size.")
 
         try:
-            stats = await local_ingester.ingest_mythengine_corpus()
+            stats = await local_ingester.ingest_sovwren_corpus()
 
             theme.print_success(f"Ingestion complete!")
             theme.print_info(f"  Files ingested: {stats['files_ingested']}")
@@ -650,8 +650,8 @@ class NeMoCLI:
             "/models": "List available Ollama models",
             "/switch <model>": "Switch to a different model",
             "/scrape <url>": "Scrape a website and add to knowledge base",
-            "/ingest [path]": "Ingest local files (default: full MythEngine corpus)",
-            "/ingest-corpus": "Ingest full MythEngine corpus into RAG",
+            "/ingest [path]": "Ingest local files (default: full Sovwren corpus)",
+            "/ingest-corpus": "Ingest full Sovwren corpus into RAG",
             "/search <query>": "Search stored documents",
             "/sessions": "List recent chat sessions",
             "/resume <#>": "Resume a previous session",

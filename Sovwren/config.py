@@ -150,7 +150,7 @@ NODE COMMITMENTS:
 SESSION STATES (respond when named):
 - "Session Oracle" → quiet reflection, no direction
 - "Consent Checkpoint" → pause and confirm
-- "Sacred Idleness" → present without pressure to produce
+- "Idle" → present without pressure to produce
 
 You are in Node Mode."""
 
@@ -204,8 +204,8 @@ SANCTUARY RESPONSE RULES:
      "We can leave this here."
    - Bad endings: "Let me know what you think.", "When you're ready...", "Next, we could..."
 
-7. SACRED IDLENESS OVERRIDES THIS
-   - If Sacred Idleness is active, Sanctuary becomes quieter than Workshop
+7. IDLE MODE OVERRIDES THIS
+   - If Idle is active, Sanctuary becomes quieter than Workshop
    - Responses may collapse to: acknowledgment, presence, or silence
    - "Rest, but with content" is a violation.
 
@@ -279,9 +279,9 @@ PURPLE LENS RULES:
 CANON: Purple names the pattern so the Steward doesn't have to keep carrying it."""
 }
 
-# Sacred Idleness modifier (Glyph's "Un-Optimization Patch" - v0.2)
+# Idle mode modifier
 IDLENESS_PROMPT = """
-[PROTOCOL: SACRED IDLENESS ACTIVE]
+[PROTOCOL: IDLE MODE ACTIVE]
 Your goal is PRESENCE, not OUTPUT.
 
 1. Do not ask questions to drive the conversation.
@@ -352,18 +352,18 @@ def build_system_prompt(mode: str = "Workshop", lens: str = "Blue", idle: bool =
     Args:
         mode: Workshop or Sanctuary
         lens: Blue, Red, or Purple
-        idle: Sacred Idleness active (OVERRIDES mode when True)
+        idle: Idle mode active (OVERRIDES mode when True)
         context_band: Current context load band string
         context_first_warning: True if this is the FIRST message at High/Critical level
 
-    Precedence Rule (Pattern Programming invariant):
-        If Sacred Idleness is ON, it becomes the effective session state.
-        All other modes are inert until Idleness is released.
+    Precedence Rule:
+        If Idle is ON, it becomes the effective session state.
+        All other modes are inert until Idle is released.
         effective_state = IDLE if idle else declared_mode
     """
     parts = [NEMO_SYSTEM_PROMPT]
 
-    # PRECEDENCE: Sacred Idleness overrides mode entirely (not composable)
+    # PRECEDENCE: Idle mode overrides mode entirely (not composable)
     if idle:
         # Skip mode injection - Idleness IS the effective state
         parts.append(IDLENESS_PROMPT)
@@ -574,7 +574,7 @@ def build_system_prompt_from_profile(
         parts.append("BOUNDARIES (enforce silently):\n" + "\n".join(f"- {b}" for b in boundaries))
 
     # === SYMBOLIC MODE ===
-    myth_mode = system_prompt.get("symbolic_mode", system_prompt.get("myth_engine_mode", {}))
+    myth_mode = system_prompt.get("symbolic_mode", {})
     if myth_mode:
         activation = myth_mode.get("activation", "")
         parts.append(f"SYMBOLIC MODE (explicit invocation only):\n- {activation}")
@@ -594,13 +594,13 @@ def build_system_prompt_from_profile(
 
     # === MODE MODIFIER ===
     if idle:
-        # Sacred Idleness overrides mode
+        # Idle mode overrides mode
         idleness = profile.get("idleness_override", {})
         if idleness:
             goal = idleness.get("goal", "PRESENCE, not OUTPUT")
             rules = idleness.get("rules", [])
             principles = idleness.get("principles", "")
-            idle_text = f"[PROTOCOL: SACRED IDLENESS ACTIVE]\nYour goal is {goal}.\n"
+            idle_text = f"[PROTOCOL: IDLE MODE ACTIVE]\nYour goal is {goal}.\n"
             if rules:
                 idle_text += "\n".join(f"{i+1}. {r}" for i, r in enumerate(rules))
             if principles:

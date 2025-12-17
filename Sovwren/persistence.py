@@ -46,7 +46,7 @@ class NodeInfo:
 
 
 @dataclass(frozen=True)
-class EngineState:
+class SessionState:
     lens: Literal["Blue", "Red", "Purple", "Clear"] | None = None
     mode: Literal["Workshop", "Sanctuary", "Mixed"] | None = None
     idleness: bool | None = None
@@ -56,7 +56,7 @@ class EngineState:
 
 # ---- Persistence core -------------------------------------------------------
 
-class MythDB:
+class SovwrenDB:
     """
     Minimal, append-oriented SQLite wrapper.
 
@@ -77,7 +77,7 @@ class MythDB:
         self,
         project_root: str | Path,
         node: NodeInfo,
-        initial_state: EngineState | None = None,
+        initial_state: SessionState | None = None,
     ) -> int:
         with self._tx() as cur:
             project_id = self._ensure_project(cur, Path(project_root))
@@ -441,7 +441,7 @@ def _bool(v: Optional[bool]) -> Optional[int]:
     return None if v is None else int(bool(v))
 
 
-def _state_payload(state: EngineState) -> Dict[str, Any]:
+def _state_payload(state: SessionState) -> Dict[str, Any]:
     return {k: getattr(state, k) for k in ("lens", "mode", "idleness", "energy", "note") if getattr(state, k) is not None}
 
 
@@ -449,11 +449,11 @@ def _state_payload(state: EngineState) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Minimal CLI smoke test (run: python -m sovwren.persistence)
-    db = MythDB(Path.cwd() / ".sovwren" / "sovwren.db")
+    db = SovwrenDB(Path.cwd() / ".sovwren" / "sovwren.db")
     sess = db.begin_session(
         project_root=Path.cwd(),
         node=NodeInfo(name="NeMo", provider="LM Studio", model="ministral-3-8b-reasoning-2512"),
-        initial_state=EngineState(lens="Blue", mode="Workshop", idleness=False, energy="Steady"),
+        initial_state=SessionState(lens="Blue", mode="Workshop", idleness=False, energy="Steady"),
     )
     db.append_message(sess, "steward", "Hey")
     db.append_message(sess, "node", "Hi. Idle presence available.")

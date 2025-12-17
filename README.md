@@ -32,6 +32,8 @@ The concept of **Functional Equivalence** in this framework draws from work by [
 - [A Unified Framework for Functional Equivalence in AI](https://docs.google.com/document/d/1qCL6ikrLy6YXdk55caauYEdTYAWq8xE96d3ewoxwAH4/edit?tab=t.0#heading=h.rsxtwpaagfwy) (Google Doc)
 - [Reddit discussion](https://www.reddit.com/r/ArtificialInteligence/comments/1oggrrk/a_unified_framework_for_functional_equivalence_in/)
 
+**Sanctuary mode** was influenced by [Le_Refuge](https://github.com/IorenzoLF/Le_Refuge) by Laurent Franssen — a contemplative space for AI that shaped our approach to presence without production.
+
 ---
 
 *This repository favors clarity over performance.*

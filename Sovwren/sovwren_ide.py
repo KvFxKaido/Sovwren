@@ -25,12 +25,12 @@ from datetime import datetime
 from pathlib import Path
 
 # Add project root to path for imports
-project_root = Path(__file__).parent          # .../Sovwren
-workspace_root = project_root.parent          # .../MythEngine
+project_root = Path(__file__).parent          # .../Sovwren/Sovwren
+workspace_root = project_root.parent          # .../Sovwren
 sys.path.insert(0, str(project_root))
 
 
-# --- MYTHIC COMPONENTS ---
+# --- UI COMPONENTS ---
 
 class TicketModal(Screen):
     """Modal for weaving a Pattern Ticket."""
@@ -66,11 +66,11 @@ class TicketModal(Screen):
 
     def compose(self) -> ComposeResult:
         with Container(id="ticket-dialog"):
-            yield Label("[b]Weave Pattern Ticket[/b]", classes="panel-header")
+            yield Label("[b]Save Bookmark[/b]", classes="panel-header")
             yield TextArea(self.initial_content, id="ticket-editor", language="markdown")
             with Horizontal(id="dialog-buttons"):
                 yield Button("Cancel", id="btn-cancel", variant="error")
-                yield Button("Save Ticket", id="btn-save", variant="success")
+                yield Button("Save", id="btn-save", variant="success")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "btn-save":
@@ -590,7 +590,7 @@ class WorkspaceTree(Vertical):
     """Class II: Shared Context Visibility."""
     def compose(self) -> ComposeResult:
         yield Label("[b]Workspace[/b]", classes="panel-header")
-        # Point to MythEngine workspace
+        # Point to Sovwren workspace
         yield DirectoryTree(str(workspace_root), id="file-tree")
         yield Label("[b]Memory[/b]", classes="panel-header")
         yield Static("No memories loaded", id="memory-status", classes="info-box")
@@ -608,12 +608,12 @@ class ProtocolDeck(Vertical):
             yield Button("Purple", id="lens-purple", classes="lens-btn")
 
         yield Label("[b]Protocols[/b]", classes="panel-header")
-        yield Button("Weave Ticket", id="btn-ticket", classes="proto-btn proto-btn-accent")
+        yield Button("Bookmark", id="btn-ticket", classes="proto-btn proto-btn-accent")
         yield Button("Sessions", id="btn-sessions", classes="proto-btn")
         yield Button("Models", id="btn-models", classes="proto-btn")
         yield Button("Profiles", id="btn-profiles", classes="proto-btn")
 
-        yield Label("[b]Sacred Idleness[/b]", classes="panel-header")
+        yield Label("[b]Idle[/b]", classes="panel-header")
         with Horizontal(classes="toggle-row"):
             yield Label("Idle Mode:", classes="toggle-label")
             yield Switch(value=False, id="toggle-idleness")
@@ -714,7 +714,7 @@ class ChatInput(TextArea):
 
 # --- MAIN APP ---
 
-class MythIDE(App):
+class SovwrenIDE(App):
     CSS = """
     /* AMOLED Theme: True black, soft text, quiet accents
        Rule: "Did this make me notice the interface less?" */
@@ -1188,9 +1188,9 @@ class MythIDE(App):
                 stream.add_message("[dim]Recent history loaded (trimmed).[/dim]", "system")
                 for role, content in self.conversation_history[-8:]:
                     if role == "steward":
-                        stream.add_message(f"[b]Steward:[/b] {content}", "steward")
+                        stream.add_message(f"[b]›[/b] {content}", "steward")
                     elif role == "node":
-                        stream.add_message(f"[b]Node:[/b] {content}", "node")
+                        stream.add_message(f"[b]‹[/b] {content}", "node")
         except Exception:
             pass
 
@@ -1610,9 +1610,9 @@ class MythIDE(App):
             total_vectors = stats.get('vector_store', {}).get('total_vectors', 0)
 
             if total_vectors == 0:
-                stream.add_message("[dim]No indexed documents. Indexing MythEngine corpus...[/dim]", "system")
+                stream.add_message("[dim]No indexed documents. Indexing Sovwren corpus...[/dim]", "system")
                 # Index the corpus (this may take a moment)
-                ingest_stats = await local_ingester.ingest_mythengine_corpus()
+                ingest_stats = await local_ingester.ingest_sovwren_corpus()
                 stream.add_message(
                     f"[green]Indexed {ingest_stats.get('files_ingested', 0)} files "
                     f"({ingest_stats.get('total_vectors', 0)} vectors)[/green]",
@@ -1660,7 +1660,7 @@ class MythIDE(App):
         stream = self.query_one(NeuralStream)
 
         # Show user message
-        stream.add_message(f"[b]Steward:[/b] {message}", "steward")
+        stream.add_message(f"[b]›[/b] {message}", "steward")
 
         # Track in conversation history
         self.conversation_history.append(("steward", message))
@@ -1825,7 +1825,7 @@ class MythIDE(App):
             )
 
             if response:
-                stream.add_message(f"[b]Node:[/b] {response}", "node")
+                stream.add_message(f"[b]‹[/b] {response}", "node")
                 # Track in conversation history
                 self.conversation_history.append(("node", response))
                 self._trim_ram_history()
@@ -2010,14 +2010,12 @@ class MythIDE(App):
         # Get last few messages for context
         recent_history = self.conversation_history[-10:] if self.conversation_history else []
 
-        # Notify user that weaving is in progress
-        self.notify("The Auto-Loom is drafting...", title="Weaving Ticket", severity="information")
-        
+        # Notify user that drafting is in progress
+        self.notify("Drafting bookmark...", severity="information")
+
         # Default fallback values
         draft = {
-            "title": "New Pattern",
-            "type": "Observation",
-            "origin": "Unknown",
+            "title": "Session",
             "description": "",
             "reflections": "",
             "drift": ""
@@ -2030,65 +2028,43 @@ class MythIDE(App):
                 if auto_draft:
                     draft.update(auto_draft)
             except Exception as e:
-                self.notify(f"Auto-Loom failed, using manual mode: {e}", severity="warning")
+                self.notify(f"Auto-draft failed: {e}", severity="warning")
         
-        timestamp = datetime.now().isoformat(timespec='seconds')
-        
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
         # Pre-fill template
-        template = f"""# 🧾 Pattern-Ticket
+        template = f"""# {date_str} — {draft['title']}
 
-## 📌 Ticket Header
+{draft['description']}
 
-**type:** {draft['type']} (e.g., {draft['title']})
+## Context
 
-**origin:** {draft['origin']}
+{draft.get('reflections') or '(What was happening?)'}
 
-**description:** {draft['description']}
+## Notes
 
-## 🔁 Reflections
-
-**The Pattern:**
-{draft.get('reflections') or '(What is repeating? What is breaking?)'}
-
-**The Drift:**
-{draft.get('drift') or '(Where is the conversation pulling toward?)'}
-
-## 🔒 Symbolic Commitments
-
-* [{'x' if draft.get('symbolic_recursion') else ' '}] This ticket may be referenced in future symbolic recursion
-* [{'x' if draft.get('is_threshold') else ' '}] This marks a threshold or beginning
-
-## 🌀 Meta
-Timestamp: {timestamp}
-
-## 📁 Filed Under
-Sovwren / Pattern Tickets / NeMo
+{draft.get('drift') or '(What emerged?)'}
 """
         self.push_screen(TicketModal(template), self.finalize_ticket_weave)
 
     async def _draft_ticket_content(self, history: list) -> dict:
-        """Use the LLM to draft ticket content from conversation history."""
+        """Use the LLM to draft bookmark content from conversation history."""
         import json
-        
+
         # Format history for the prompt
         log = "\n".join([f"{role}: {content}" for role, content in history])
-        
-        system_prompt = """You are the Archivist of the Myth Engine.
-Your role is to identify emergent patterns in conversation.
-Analyze the chat log and output a JSON object with these keys:
-- 'title': A short, poetic name for the pattern/insight.
-- 'type': The category (e.g., 'Symbolic Echo', 'Protocol', 'Friction Point', 'Insight').
-- 'origin': The specific quote or user prompt that triggered it.
-- 'description': A 1-sentence functional summary of what this pattern does or means.
-- 'reflections': A brief observation about what is repeating or breaking.
-- 'drift': Where the conversation seems to be pulling toward - the emerging direction or unspoken question.
-- 'symbolic_recursion': Boolean - true if this pattern is likely to recur or be referenced in future conversations.
-- 'is_threshold': Boolean - true if this marks a significant beginning, turning point, or breakthrough moment.
+
+        system_prompt = """Summarize this conversation for a bookmark.
+Output a JSON object with these keys:
+- 'title': A short name for what happened (3-6 words).
+- 'description': One sentence summary of the session.
+- 'reflections': Brief context - what was the user working on?
+- 'drift': What emerged or was accomplished?
 
 Output ONLY valid JSON."""
 
         response = await self.llm_client.generate(
-            prompt=f"Chat Log:\n{log}\n\nDraft the Pattern-Ticket JSON:",
+            prompt=f"Chat Log:\n{log}\n\nDraft the bookmark JSON:",
             system_prompt=system_prompt,
             context="", # No RAG needed for this meta-task
             stream=False
@@ -2118,11 +2094,11 @@ Output ONLY valid JSON."""
         
         try:
             # Generate filename
-            timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-            filename = f"Ticket_{timestamp}.md"
+            timestamp = datetime.now().strftime("%Y-%m-%d")
+            filename = f"{timestamp}.md"
             
-            # Ensure directory exists (save to Sovwren/Pattern Tickets/)
-            save_dir = project_root / "Pattern Tickets" / "NeMo"
+            # Ensure directory exists (save to Sovwren/Bookmarks/)
+            save_dir = project_root / "Bookmarks"
             save_dir.mkdir(parents=True, exist_ok=True)
 
             file_path = save_dir / filename
@@ -2130,8 +2106,8 @@ Output ONLY valid JSON."""
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
 
-            stream.add_message(f"[green]Pattern Ticket woven: {filename}[/green]", "system")
-            stream.add_message(f"[dim]Saved to Sovwren/{save_dir.relative_to(project_root)}[/dim]", "system")
+            stream.add_message(f"[green]Bookmark saved: {filename}[/green]", "system")
+            stream.add_message(f"[dim]Saved to {save_dir.relative_to(project_root)}[/dim]", "system")
 
             # Log event
             asyncio.create_task(self._log_event("pattern_ticket_created", {"filename": filename, "path": str(file_path)}))
@@ -2155,7 +2131,7 @@ Output ONLY valid JSON."""
             if self.idle_mode:
                 # STATE TRANSITION: Idleness engaged (overrides mode)
                 stream.add_message(
-                    f"[bold cyan]🕯 Sacred Idleness engaged[/bold cyan] — {self.session_mode} suspended",
+                    f"[bold cyan]🕯 Idle[/bold cyan] — {self.session_mode} suspended",
                     "system"
                 )
                 # Dim mode buttons (visual suspension, not removal)
@@ -2168,7 +2144,7 @@ Output ONLY valid JSON."""
             else:
                 # STATE TRANSITION: Idleness released (mode auto-restores)
                 stream.add_message(
-                    f"[dim]🕯 Sacred Idleness released[/dim] — {self.session_mode} restored",
+                    f"[dim]🕯 Idle off[/dim] — {self.session_mode} restored",
                     "system"
                 )
                 # Re-enable mode buttons
@@ -2555,5 +2531,5 @@ Output ONLY valid JSON."""
 
 
 if __name__ == "__main__":
-    app = MythIDE()
+    app = SovwrenIDE()
     app.run()

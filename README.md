@@ -14,6 +14,16 @@ This creates false intimacy, cognitive overhead, and ethical ambiguity.
 
 Sovwren makes these states explicit. Not to control the model — but to reduce the burden on the human carrying continuity.
 
+## What It Is
+
+**Sovwren IDE** is a terminal-based interface for working with local LLMs. It surfaces:
+- context load and saturation warnings
+- mode toggles (Workshop for building, Sanctuary for reflection, Idle for presence without output)
+- session bookmarks for preserving what matters across resets
+- a shared file tree so you see what the model sees
+
+Local-first. No cloud dependency. Connects to LM Studio or Ollama.
+
 ## Canonical Document
 
 **Sovwren Framework (v1.1)**  

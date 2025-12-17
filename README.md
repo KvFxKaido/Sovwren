@@ -5,7 +5,7 @@ This repository centers a plain-language framework for sustainable human–AI co
 ## Canonical Document
 
 **Sovwren Framework (v1.1)**  
-→ `Partnership-Framework.md`
+→ `Sovwren Framework.md`
 
 This framework defines:
 - how humans and AI collaborate when memory is discontinuous

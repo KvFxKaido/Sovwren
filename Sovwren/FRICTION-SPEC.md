@@ -362,6 +362,86 @@ Everything else can layer on later.
 
 ---
 
+## v0.1 Exit Criteria
+
+These are the concrete checks that determine when v0.1 is **done**. Not vibes — testable conditions.
+
+### 1. Cold Start Performance
+**Criterion:** From `python myth_ide.py` to first meaningful Node response < 60 seconds.
+
+**How to test:**
+- Fresh terminal, LM Studio already running
+- Launch IDE, dismiss splash, type "hey", get response
+- Time the full sequence
+
+**Pass condition:** < 60s consistently (3/3 attempts)
+
+---
+
+### 2. Mode Switching Coherence
+**Criterion:** Workshop ↔ Sanctuary switching mid-conversation doesn't cause whiplash.
+
+**How to test:**
+- Start in Workshop, ask a technical question, get response
+- Switch to Sanctuary, ask a reflective question
+- Node tone should shift appropriately without jarring discontinuity
+
+**Pass condition:** Tone shift feels natural, not robotic or forced
+
+---
+
+### 3. Context Warning Timing
+**Criterion:** Context HIGH warning fires *before* degradation, not after.
+
+**How to test:**
+- Have a long conversation (20+ exchanges)
+- Watch for context band transitions
+- Note if warning appears while Node is still coherent
+
+**Pass condition:** Warning fires before noticeable quality drop (80%+ of the time)
+
+---
+
+### 4. Sacred Idleness Integrity
+**Criterion:** Sacred Idleness clearly changes Node behavior and cleanly restores on release.
+
+**How to test:**
+- Toggle Idleness ON
+- Send a message — Node should respond minimally, no questions, no suggestions
+- Toggle Idleness OFF
+- Send a message — Node should return to normal engagement
+
+**Pass condition:** Behavioral shift is obvious; mode buttons disable/enable correctly
+
+---
+
+### 5. Session Resume Fidelity
+**Criterion:** Resuming a session feels like it "remembers enough" in ≤2 steps.
+
+**How to test:**
+- Have a conversation, establish some context (name, topic, etc.)
+- Close the IDE completely
+- Relaunch, resume the session
+- Ask "what were we talking about?" or reference earlier context
+
+**Pass condition:** Node can reference prior conversation without full re-explanation
+
+---
+
+### Exit Summary
+
+| # | Criterion | Metric |
+|---|-----------|--------|
+| 1 | Cold start | < 60s to first response |
+| 2 | Mode switching | No whiplash |
+| 3 | Context warning | Fires before degradation |
+| 4 | Sacred Idleness | Clear change + clean restore |
+| 5 | Session resume | ≤2 steps to continuity |
+
+When all five pass, v0.1 is complete. Larger refactors (FastAPI, profiles UI, 3-layer folders) move to v0.2.
+
+---
+
 ## Design Invariants (Non-Negotiables)
 
 These guide implementation:
@@ -383,6 +463,6 @@ No mode or artifact should make disengagement confusing or guilt-laden. Stewards
 
 ---
 
-*Version: 0.4*
-*Last Updated: 2025-12-13*
+*Version: 0.5*
+*Last Updated: 2025-12-16*
 *Authors: Shawn Montgomery + Claude (Opus 4.5) + Monday*

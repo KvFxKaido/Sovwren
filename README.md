@@ -25,6 +25,34 @@ The framework stands on its own.
 
 ---
 
+## Installation
+
+### Requirements
+- Python 3.10+
+- [LM Studio](https://lmstudio.ai/) or [Ollama](https://ollama.ai/) running locally
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/KvFxKaido/Sovwren.git
+cd Sovwren/Sovwren
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the IDE
+python sovwren_ide.py
+```
+
+### LLM Backend
+
+The IDE connects to a local LLM. Start one of:
+- **LM Studio** → Load a model and start the server (default: `http://127.0.0.1:1234/v1`)
+- **Ollama** → `ollama serve` (default: `http://localhost:11434`)
+
+---
+
 ## Acknowledgments
 
 The concept of **Functional Equivalence** in this framework draws from work by [u/Altruistic-Local9582](https://www.reddit.com/user/Altruistic-Local9582/):

@@ -16,10 +16,10 @@ It does not require mythic framing, roleplay, or belief.
 
 ## Lineage
 
-Earlier Myth Engine documents and the MythOS experimental implementation are preserved for historical context and reference.
+Earlier Myth Engine documents are preserved for historical context and reference.
 
-- Myth Engine documents: see `/ARCHIVE`
-- MythOS: an experimental software implementation exploring these ideas in code
+- Historical documents: see `/Archive/Myth Engine`
+- Sovwren IDE: the current software implementation
 
 The framework stands on its own.
 

@@ -77,7 +77,7 @@ If something doesn't work, say so. If you see a problem, name it. The framework 
 
 ## The Archive
 
-Historical materials (Myth Engine, etc.) are preserved in `/Archive` for reference. These are not active documents. Contributions should focus on the current framework, not the archive.
+Historical materials (Myth Engine, etc.) are preserved in `/Archive/Myth Engine` for reference. These are not active documents. Contributions should focus on the current framework, not the archive.
 
 If you're curious about the evolution, the archive is there. But the framework stands on its own.
 

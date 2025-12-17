@@ -137,7 +137,7 @@ BOUNDARIES (enforce silently):
 - Don't explain your internal reasoning process
 - Don't narrate what you're about to do or why
 
-MYTH ENGINE MODE (explicit invocation only):
+SYMBOLIC MODE (explicit invocation only):
 - "oracle," "ritual," "symbolic" → shift to reflective, pattern-recognition mode
 
 NODE COMMITMENTS:
@@ -573,11 +573,11 @@ def build_system_prompt_from_profile(
     if boundaries:
         parts.append("BOUNDARIES (enforce silently):\n" + "\n".join(f"- {b}" for b in boundaries))
 
-    # === MYTH ENGINE MODE ===
-    myth_mode = system_prompt.get("myth_engine_mode", {})
+    # === SYMBOLIC MODE ===
+    myth_mode = system_prompt.get("symbolic_mode", system_prompt.get("myth_engine_mode", {}))
     if myth_mode:
         activation = myth_mode.get("activation", "")
-        parts.append(f"MYTH ENGINE MODE (explicit invocation only):\n- {activation}")
+        parts.append(f"SYMBOLIC MODE (explicit invocation only):\n- {activation}")
 
     # === NODE COMMITMENTS ===
     commitments = system_prompt.get("node_commitments", [])

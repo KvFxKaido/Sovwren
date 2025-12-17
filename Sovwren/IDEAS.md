@@ -141,7 +141,7 @@ Two persistence concepts emerging:
 
 **Source:** Monday
 
-`bash ./run-myth.sh` that:
+`bash ./run-sovwren.sh` that:
 - Installs dependencies
 - Boots LM Studio if not running
 - Launches the TUI

@@ -5,9 +5,9 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "C:\\Users\\ishaw\\OneDrive\\Documents\\MythEngine"
+        "C:\\Users\\ishaw\\OneDrive\\Documents\\Sovwren"
       ],
-      "description": "File operations - NeMo can read, write, search, and manage files in MythEngine workspace"
+      "description": "File operations - NeMo can read, write, search, and manage files in Sovwren workspace"
     }
   },
   "_disabled_servers": {
@@ -15,7 +15,7 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-memory"],
       "env": {
-        "MEMORY_FILE_PATH": "C:\\Users\\ishaw\\OneDrive\\Documents\\MythEngine\\Memory\\nemo_memory.jsonl"
+        "MEMORY_FILE_PATH": "C:\\Users\\ishaw\\OneDrive\\Documents\\Sovwren\\Memory\\nemo_memory.jsonl"
       },
       "description": "DISABLED - Replaced by custom memory system (Memory/nemo_memory.json) due to schema validation bugs"
     },
@@ -33,7 +33,7 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "",
         "GITHUB_OWNER": "KvFxKaido",
-        "GITHUB_REPO": "Myth-Engine"
+        "GITHUB_REPO": "Sovwren"
       },
       "description": "GitHub API access - DISABLED (tools were failing, needs troubleshooting)"
     }

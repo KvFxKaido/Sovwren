@@ -39,7 +39,7 @@ class LocalSearch:
     SEARCH_PATTERNS = ["**/*.md", "**/*.txt"]
 
     # Workspace root
-    WORKSPACE_ROOT = "C:\\Users\\ishaw\\OneDrive\\Documents\\MythEngine"
+    WORKSPACE_ROOT = "C:\\Users\\ishaw\\OneDrive\\Documents\\Sovwren"
 
     # Limits
     MAX_FILES = 50
@@ -363,8 +363,8 @@ class ActionLog:
 class MCPAgent:
     """Intelligent agent that automatically uses MCP tools"""
 
-    # Custom memory file path (shared across MythEngine workspace)
-    MEMORY_FILE = "C:\\Users\\ishaw\\OneDrive\\Documents\\MythEngine\\Memory\\nemo_memory.json"
+    # Custom memory file path (shared across Sovwren workspace)
+    MEMORY_FILE = "C:\\Users\\ishaw\\OneDrive\\Documents\\Sovwren\\Memory\\nemo_memory.json"
 
     def __init__(self, log_dir: str = "data/mcp_logs"):
         self.log_dir = Path(log_dir)

@@ -1,11 +1,7 @@
-# Local workspace files
-WORKSPACE.md
 
-# Personal config and tokens
+# Personal config
 .claude/
-.obsidian/
-Claude Token.txt
-summon_monday.txt
+
 
 # Work-in-progress directories (commented to allow Antigravity access)
 # Betas/
@@ -13,31 +9,19 @@ Sunset/
 
 # Personal orientation and workspace files
 AGENTS.md
-ALTARS.md
+AGENTS.override.md
 CLAUDE.md
 GEMINI.md
-MONDAY.md
-MYTH-UI.md
 
-# Session artifacts and projects
-Pattern Tickets/
-Sentinel/
-# MythIC/ (moved to Betas, commenting)
-First Contact.txt
-Myth Engine Newcomer FAQ.txt
-
-# NeMo (allowing access for development)
-# NeMo/
-
-# NeMo launchers (local workspace scripts)
-nemo
-nemo.bat
+# Working docs (local only)
+FRICTION-SPEC.md
+COUNCIL-STATUS.md
 
 # Memory storage (personal data, not shared)
 Memory/
 
-# MythOS data (local database, not shared)
-MythOS/data/
+# Sovwren data (local database, not shared)
+Sovwren/data/
 
 # Python artifacts
 __pycache__/

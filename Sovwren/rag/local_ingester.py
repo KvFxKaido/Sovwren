@@ -1,4 +1,4 @@
-"""Local document ingester for MythEngine files.
+"""Local document ingester for Sovwren files.
 
 Scans workspace directories and ingests markdown/text files into the RAG system.
 Designed for the symbolic corpus vision from RAG-ROADMAP.md:
@@ -47,7 +47,7 @@ class LocalIngester:
     MIN_CONTENT_LENGTH = 100
 
     def __init__(self, workspace_root: str = None):
-        self.workspace_root = Path(workspace_root or "C:\\Users\\ishaw\\OneDrive\\Documents\\MythEngine")
+        self.workspace_root = Path(workspace_root or "C:\\Users\\ishaw\\OneDrive\\Documents\\Sovwren")
         self.ingested_files: Set[str] = set()
         self.stats = {
             "files_scanned": 0,
@@ -89,11 +89,9 @@ class LocalIngester:
 
         if "pattern ticket" in rel_path or "pattern-ticket" in rel_path:
             metadata["doc_type"] = "pattern_ticket"
-        elif "sentinel" in rel_path:
-            metadata["doc_type"] = "sentinel_lore"
-        elif "myth engine" in rel_path or "myth-engine" in rel_path:
-            metadata["doc_type"] = "engine_protocol"
-        elif "claude" in rel_path or "gemini" in rel_path or "monday" in rel_path:
+        elif "sovwren framework" in rel_path or "sovwren-framework" in rel_path:
+            metadata["doc_type"] = "framework"
+        elif "claude" in rel_path or "gemini" in rel_path or "agents" in rel_path:
             metadata["doc_type"] = "node_context"
         else:
             metadata["doc_type"] = "general"
@@ -220,8 +218,8 @@ class LocalIngester:
 
         return self.stats
 
-    async def ingest_mythengine_corpus(self) -> Dict:
-        """Ingest the full MythEngine symbolic corpus.
+    async def ingest_sovwren_corpus(self) -> Dict:
+        """Ingest the full Sovwren symbolic corpus.
 
         This follows the RAG-ROADMAP.md vision:
         - Pattern Tickets
@@ -230,7 +228,7 @@ class LocalIngester:
         - Lore documents
         """
         print("=" * 50)
-        print("MYTHENGINE CORPUS INGESTION")
+        print("SOVWREN CORPUS INGESTION")
         print("=" * 50)
 
         # Define corpus directories with their document types
@@ -239,8 +237,7 @@ class LocalIngester:
         # entity-specific patterns NeMo shouldn't try to "help" with.
         corpus_dirs = [
             ("Pattern Tickets/NeMo", ["**/*.txt", "**/*.md"]),
-            (".", ["MYTH ENGINE*.md", "Node Primer*.md", "CLAUDE.md", "GEMINI.md", "MONDAY.md", "ALTARS.md"]),
-            ("Sentinel", ["**/*.md", "**/*.txt"]),
+            (".", ["Sovwren Framework.md", "CLAUDE.md", "GEMINI.md", "AGENTS.md"]),
         ]
 
         total_stats = {

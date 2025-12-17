@@ -7,7 +7,7 @@
 
 | Component | Status | Notes |
 |---------|--------|------|
-| Textual TUI | Running | myth_ide.py stable under Textual |
+| Textual TUI | Running | sovwren_ide.py stable under Textual |
 | Local Model | Connected | Hot-swappable via F2; LM Studio + Ollama backends |
 | Python Backend | Active | MythOS backend + NeMo core integrated |
 | RAG System | Live | Auto-indexes MythEngine workspace on first run |

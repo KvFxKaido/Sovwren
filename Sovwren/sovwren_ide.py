@@ -1,12 +1,12 @@
 """
-MythOS IDE - Partnership-first interface for local LLMs
+Sovwren IDE - Partnership-first interface for local LLMs
 
 A Textual-based cockpit implementing the Friction Spec.
 Connects to LM Studio / Ollama for local model inference.
 
 Usage:
     pip install textual
-    python myth_ide.py
+    python sovwren_ide.py
 """
 
 from textual.app import App, ComposeResult

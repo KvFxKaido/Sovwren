@@ -367,7 +367,7 @@ Everything else can layer on later.
 These are the concrete checks that determine when v0.1 is **done**. Not vibes — testable conditions.
 
 ### 1. Cold Start Performance
-**Criterion:** From `python myth_ide.py` to first meaningful Node response < 60 seconds.
+**Criterion:** From `python sovwren_ide.py` to first meaningful Node response < 60 seconds.
 
 **How to test:**
 - Fresh terminal, LM Studio already running

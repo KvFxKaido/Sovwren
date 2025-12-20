@@ -84,9 +84,15 @@ class GeminiSearchAdapter(SearchAdapter):
 
             # Use Gemini 2.5 Flash with Google Search grounding
             self._client = genai
+
+            # Create Google Search tool properly
+            google_search_tool = genai.protos.Tool(
+                google_search=genai.protos.GoogleSearch()
+            )
+
             self._model = genai.GenerativeModel(
                 'gemini-2.5-flash',
-                tools='google_search'
+                tools=[google_search_tool]
             )
         except ImportError:
             raise SearchError(

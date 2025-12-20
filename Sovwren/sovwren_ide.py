@@ -2252,6 +2252,26 @@ class SovwrenIDE(App):
             greeting_patterns = ['hey', 'hi', 'hello', 'yo', 'sup', 'what\'s up', 'howdy', 'greetings']
             is_greeting = any(msg_lower.strip().startswith(g) for g in greeting_patterns) and len(message.split()) < 5
 
+            # Search Gate (Friction Class VI) - web search when gate is open
+            if self.search_gate_enabled and self.search_manager and not is_greeting:
+                try:
+                    stream.add_message("[dim]🌐 Searching web...[/dim]", "system")
+                    search_results, search_error = await self.search_manager.search(message, max_results=3)
+
+                    if search_error:
+                        stream.add_message(f"[yellow]Search: {search_error}[/yellow]", "system")
+                    elif search_results:
+                        # Inject search results into context (Librarian Pattern)
+                        search_context = self.search_manager.format_for_context(search_results)
+                        context_parts.append(search_context)
+                        sources_used.append(f"Web ({len(search_results)} sources)")
+
+                        # Show citations in chat
+                        citations = self.search_manager.format_citations(search_results)
+                        stream.add_message(f"[dim]Sources found:[/dim]\n{citations}", "system")
+                except Exception as e:
+                    stream.add_message(f"[yellow]Search failed: {e}[/yellow]", "system")
+
             if hasattr(self, 'rag_initialized') and self.rag_initialized and self.rag_retriever and not is_greeting:
                 try:
                     # Call with debug=True if RAG debug mode is enabled

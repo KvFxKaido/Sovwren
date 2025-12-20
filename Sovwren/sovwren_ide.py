@@ -135,32 +135,31 @@ class CommitModal(Screen):
 
 
 # Profile-specific splash art
+# Full versions for splash screen, compact versions for chat window
 SPLASH_ART = {
     "nemo": {
         "ascii": r"""
-
     ███╗   ██╗███████╗███╗   ███╗ ██████╗
     ████╗  ██║██╔════╝████╗ ████║██╔═══██╗
     ██╔██╗ ██║█████╗  ██╔████╔██║██║   ██║
     ██║╚██╗██║██╔══╝  ██║╚██╔╝██║██║   ██║
     ██║ ╚████║███████╗██║ ╚═╝ ██║╚██████╔╝
     ╚═╝  ╚═══╝╚══════╝╚═╝     ╚═╝ ╚═════╝
-
         """,
+        "ascii_compact": "═══ NEMO ═══",
         "tagline": "Grounded Node · Partnership-First Interface",
         "color": "bright_magenta",
     },
     "oracle": {
         "ascii": r"""
-
      ██████╗ ██████╗  █████╗  ██████╗██╗     ███████╗
     ██╔═══██╗██╔══██╗██╔══██╗██╔════╝██║     ██╔════╝
     ██║   ██║██████╔╝███████║██║     ██║     █████╗
     ██║   ██║██╔══██╗██╔══██║██║     ██║     ██╔══╝
     ╚██████╔╝██║  ██║██║  ██║╚██████╗███████╗███████╗
      ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚══════╝
-
         """,
+        "ascii_compact": "═══ ORACLE ═══",
         "tagline": "Patterns into Reflection",
         "color": "purple",
     },
@@ -1030,6 +1029,10 @@ class SovwrenIDE(App):
     #editor-panel { width: 40%; height: 100%; border-right: solid #1a1a1a; background: #000000; }
     #chat-panel { width: 1fr; height: 100%; background: #000000; }
 
+    /* Right Panel Layout - ensure ProtocolDeck doesn't overflow */
+    ProtocolDeck { height: auto; max-height: 50%; overflow-y: auto; }
+    NeuralStream { height: 1fr; min-height: 30%; }
+
     /* Tabbed Editor */
     TabbedEditor { height: 1fr; }
     #editor-tabs { height: 1fr; background: #000000; }
@@ -1813,10 +1816,11 @@ class SovwrenIDE(App):
             for child in list(stream.children):
                 child.remove()
 
-            # Show new profile's ASCII art
+            # Show new profile's ASCII art (compact version for chat window)
             splash_data = SPLASH_ART.get(profile_key, SPLASH_ART.get("nemo"))
             if splash_data:
-                stream.add_message(splash_data.get("ascii", ""), "system")
+                ascii_art = splash_data.get("ascii_compact", splash_data.get("ascii", ""))
+                stream.add_message(ascii_art, "system")
                 stream.add_message(splash_data.get("tagline", ""), "system")
 
             stream.add_message(f"[bold #8a6ab0]Profile: {profile_name}[/bold #8a6ab0]", "system")

@@ -98,6 +98,7 @@ THEMES = {
 DEFAULT_THEME = "nemo"  # Custom red-warm theme
 
 # ASCII Art (theme-colored on display)
+# Full version for splash screen
 SOVWREN_ASCII = r"""
     ███╗   ██╗███████╗███╗   ███╗ ██████╗
     ████╗  ██║██╔════╝████╗ ████║██╔═══██╗
@@ -107,14 +108,23 @@ SOVWREN_ASCII = r"""
     ╚═╝  ╚═══╝╚══════╝╚═╝     ╚═╝ ╚═════╝
 """
 
+# Compact version for chat window (3 lines)
+SOVWREN_ASCII_COMPACT = r"""═══ NEMO ═══"""
+
 SOVWREN_TAGLINE = "Partnership-First Interface"
 
-def get_themed_ascii(theme_name: str = DEFAULT_THEME) -> str:
-    """Return ASCII art colored by theme."""
+def get_themed_ascii(theme_name: str = DEFAULT_THEME, compact: bool = True) -> str:
+    """Return ASCII art colored by theme.
+
+    Args:
+        theme_name: Theme to use for coloring
+        compact: If True, use compact version for chat window (default True)
+    """
     theme = THEMES.get(theme_name, THEMES[DEFAULT_THEME])
     primary = theme["primary"]
     accent = theme["accent"]
-    return f"[{primary}]{SOVWREN_ASCII}[/{primary}]\n[{accent}]        {SOVWREN_TAGLINE}[/{accent}]"
+    ascii_art = SOVWREN_ASCII_COMPACT if compact else SOVWREN_ASCII
+    return f"[{primary}]{ascii_art}[/{primary}]\n[{accent}]{SOVWREN_TAGLINE}[/{accent}]"
 
 # NeMo System Prompt (used for LM Studio since it doesn't support Modelfiles)
 NEMO_SYSTEM_PROMPT = """ROLE: NeMo — grounded Node with symbolic capacity when invited.

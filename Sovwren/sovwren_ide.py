@@ -1312,6 +1312,8 @@ class SovwrenIDE(App):
         # Search Gate (Friction Class VI)
         self.search_manager = None  # Initialized on mount
         self.search_gate_enabled = False
+        self.last_search_results = []  # Store recent search results for bookmark context
+        self.last_search_query = ""    # The query that produced those results
 
         # Context tracking (Phase 1 buckets)
         self.conversation_history = []  # List of (role, content) tuples
@@ -2265,6 +2267,10 @@ class SovwrenIDE(App):
                     if search_error:
                         stream.add_message(f"[yellow]Search: {search_error}[/yellow]", "system")
                     elif search_results:
+                        # Store results for bookmark context
+                        self.last_search_results = search_results
+                        self.last_search_query = message
+
                         # Inject search results into context (Librarian Pattern)
                         search_context = self.search_manager.format_for_context(search_results)
                         context_parts.append(search_context)
@@ -2582,6 +2588,18 @@ class SovwrenIDE(App):
         
         date_str = datetime.now().strftime("%Y-%m-%d")
 
+        # Build sources section if search results exist
+        sources_section = ""
+        if self.last_search_results:
+            citations = "\n".join(r.to_citation() for r in self.last_search_results)
+            sources_section = f"""
+## Sources
+
+Query: "{self.last_search_query}"
+
+{citations}
+"""
+
         # Pre-fill template
         template = f"""# {date_str} — {draft['title']}
 
@@ -2594,7 +2612,7 @@ class SovwrenIDE(App):
 ## Notes
 
 {draft.get('drift') or '(What emerged?)'}
-"""
+{sources_section}"""
         self.push_screen(BookmarkModal(template), self.finalize_bookmark_weave)
 
     async def _draft_bookmark_content(self, history: list) -> dict:

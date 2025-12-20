@@ -82,10 +82,10 @@ class GeminiSearchAdapter(SearchAdapter):
             import google.generativeai as genai
             genai.configure(api_key=self._api_key)
 
-            # Use Gemini 2.0 Flash with Google Search grounding
+            # Use Gemini 2.5 Flash with Google Search grounding
             self._client = genai
             self._model = genai.GenerativeModel(
-                'gemini-2.0-flash',
+                'gemini-2.5-flash',
                 tools='google_search_retrieval'
             )
         except ImportError:

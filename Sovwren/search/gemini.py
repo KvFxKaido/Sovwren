@@ -86,7 +86,7 @@ class GeminiSearchAdapter(SearchAdapter):
             self._client = genai
             self._model = genai.GenerativeModel(
                 'gemini-2.5-flash',
-                tools='google_search_retrieval'
+                tools='google_search'
             )
         except ImportError:
             raise SearchError(

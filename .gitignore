@@ -25,6 +25,12 @@ profiles/nemo.json
 profiles/oracle.json
 
 # -------------------------------------------
+# User workspace (your files, not shipped)
+# -------------------------------------------
+workspace/*
+!workspace/.gitkeep
+
+# -------------------------------------------
 # User data (personal, not shared)
 # -------------------------------------------
 Bookmarks/

@@ -25,8 +25,9 @@ from datetime import datetime
 from pathlib import Path
 
 # Add project root to path for imports
-project_root = Path(__file__).parent          # .../Sovwren/Sovwren
-workspace_root = project_root.parent          # .../Sovwren
+project_root = Path(__file__).parent          # .../Sovwren
+workspace_root = project_root / "workspace"   # .../Sovwren/workspace
+workspace_root.mkdir(exist_ok=True)           # Ensure it exists
 sys.path.insert(0, str(project_root))
 
 

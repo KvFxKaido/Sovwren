@@ -49,6 +49,10 @@ Start one of:
 - **LM Studio** — Load a model and start the server (default: `http://127.0.0.1:1234/v1`)
 - **Ollama** — `ollama serve` (default: `http://localhost:11434`)
 
+## Workspace
+
+The `workspace/` folder is your local space. Put documents, notes, and project files there. The file explorer defaults to this folder, and contents are gitignored.
+
 ## Profiles
 
 Sovwren uses JSON profiles to configure behavior. See `profiles/minimal.json` for the base structure.

@@ -1337,6 +1337,11 @@ class SovwrenIDE(App):
         self.idle_mode = False
         self.rag_debug_enabled = False  # RAG Debug Mode toggle
 
+        # Session management (initialized properly in _start_new_session/_resume_session)
+        self.db = None
+        self.session_id = None
+        self._exchange_count = 0
+
         # Search Gate (Friction Class VI)
         self.search_manager = None  # Initialized on mount
         self.search_gate_enabled = False
@@ -3056,7 +3061,7 @@ Output ONLY valid JSON."""
 
     async def _persist_exchange(self, user_message: str, ai_response: str, context_used: str) -> None:
         """Write conversation + session metadata so resume works across restarts."""
-        if self.db is None:
+        if self.db is None or self.session_id is None:
             return
 
         model_used = getattr(self.llm_client, "current_model", None)

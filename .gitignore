@@ -25,10 +25,9 @@ profiles/nemo.json
 profiles/oracle.json
 
 # -------------------------------------------
-# User workspace (your files, not shipped)
+# User workspace (created on first run)
 # -------------------------------------------
-workspace/*
-!workspace/.gitkeep
+workspace/
 
 # -------------------------------------------
 # User data (personal, not shared)

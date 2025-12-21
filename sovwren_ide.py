@@ -3084,9 +3084,13 @@ Output ONLY valid JSON."""
                 model_used=model_used,
             )
             await self.db.set_preference(self.PREF_LAST_SESSION_KEY, self.session_id)
-        except Exception:
-            # Persistence should never break the flow.
-            pass
+        except Exception as e:
+            # Log persistence errors for debugging (but don't break the flow)
+            try:
+                stream = self.query_one(NeuralStream)
+                stream.add_message(f"[dim red]Session save error: {e}[/dim red]", "system")
+            except Exception:
+                pass
 
     def action_toggle_sidebar(self) -> None:
         """Toggle sidebar visibility."""

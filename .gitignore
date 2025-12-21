@@ -1,32 +1,59 @@
+# ===========================================
+# Sovwren .gitignore
+# Public repo = IDE mechanics
+# Private     = Framework philosophy + tuned profiles
+# ===========================================
 
-# Personal config
-.claude/
-
-
-# Work-in-progress directories
-Images/
-IDEAS.md
-# Personal orientation and workspace files
+# -------------------------------------------
+# Framework (the "soul" — not shipped)
+# -------------------------------------------
+Sovwren Framework.md
+CLAUDE.md
 AGENTS.md
 AGENTS.override.md
-CLAUDE.md
 GEMINI.md
-
-# Working docs (local only)
 FRICTION-SPEC.md
 COUNCIL-STATUS.md
 COUNCIL-BRIEF.md
 STATUS.md
-Bookmarks/
+IDEAS.md
 Primer*.md
 
-# Memory storage (personal data, not shared)
+# Tuned profiles (keep minimal.json as public example)
+Sovwren/profiles/nemo.json
+Sovwren/profiles/oracle.json
+
+# Internal framework docs inside package
+Sovwren/CLAUDE.md
+Sovwren/AGENTS.md
+Sovwren/AGENTS.override.md
+Sovwren/GEMINI.md
+Sovwren/IDEAS.md
+
+# -------------------------------------------
+# User data (personal, not shared)
+# -------------------------------------------
+Bookmarks/
+Sovwren/Bookmarks/
 Memory/
-
-# Sovwren data (local database, not shared)
 Sovwren/data/
+Archive/
+Media/*
+!Media/Sovwren_Logo_2.jpg
+Images/
 
+# -------------------------------------------
+# Environment / Config
+# -------------------------------------------
+.claude/
+venv/
+Sovwren/venv/
+.env
+*.local
+
+# -------------------------------------------
 # Python artifacts
+# -------------------------------------------
 __pycache__/
 *.pyc
 *.pyo
@@ -35,5 +62,22 @@ __pycache__/
 *.egg-info/
 .eggs/
 
-# Windows artifacts
+# -------------------------------------------
+# Node artifacts (legacy web stuff)
+# -------------------------------------------
+node_modules/
+dist/
+dist-ssr/
+
+# -------------------------------------------
+# OS / Editor
+# -------------------------------------------
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 nul

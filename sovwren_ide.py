@@ -688,6 +688,11 @@ class ProtocolDeck(Vertical):
             yield Label("🌐", classes="toggle-label")
             yield Switch(value=False, id="toggle-search-gate")
 
+        yield Label("[b]Council[/b]", classes="panel-header panel-header-spaced")
+        with Horizontal(classes="toggle-row"):
+            yield Label("☁️", classes="toggle-label")
+            yield Switch(value=False, id="toggle-council-gate")
+
         yield Label("[b]Debug[/b]", classes="panel-header panel-header-spaced")
         with Horizontal(classes="toggle-row"):
             yield Label("🔍", classes="toggle-label")
@@ -716,6 +721,7 @@ class StatusBar(Static):
     context_band = reactive("Unknown")
     profile_name = reactive("NeMo")
     search_gate = reactive("Local")  # "Local" or "Web (Provider)"
+    council_gate = reactive("Off")  # "Off" or model shortname
 
     # Moon phases for context load: empty → filling → half → full
     CONTEXT_GLYPHS = {
@@ -741,6 +747,12 @@ class StatusBar(Static):
             return "🔒"  # Closed gate
         return "🌐"  # Open gate (web enabled)
 
+    def _get_council_indicator(self) -> str:
+        """Get council gate indicator."""
+        if self.council_gate == "Off":
+            return ""  # Hidden when off
+        return "☁️"  # Cloud when enabled
+
     def _build_status_text(self) -> str:
         """Build the full status text string."""
         status = "Connected" if self.connected else "Disconnected"
@@ -751,6 +763,7 @@ class StatusBar(Static):
         with Horizontal(id="status-bar-content"):
             yield Label(self._get_context_glyph(), id="context-glyph")
             yield Label(self._get_search_indicator(), id="search-glyph")
+            yield Label(self._get_council_indicator(), id="council-glyph")
             yield Label(self._build_status_text(), id="status-text")
 
     def update_status(self, connected: bool, model: str = ""):
@@ -779,6 +792,14 @@ class StatusBar(Static):
         self.search_gate = status
         try:
             self.query_one("#search-glyph", Label).update(self._get_search_indicator())
+        except Exception:
+            pass
+
+    def update_council_gate(self, status: str):
+        """Update the council gate indicator (Friction Class VI extension)."""
+        self.council_gate = status
+        try:
+            self.query_one("#council-glyph", Label).update(self._get_council_indicator())
         except Exception:
             pass
 
@@ -1242,6 +1263,7 @@ class SovwrenIDE(App):
         ("f3", "consent_check", "Consent"),
         ("f4", "log_rupture", "Rupture"),
         ("f5", "toggle_search_gate", "Search Gate"),
+        ("f6", "toggle_council_gate", "Council Gate"),
         ("ctrl+o", "open_external", "Open in Editor"),
         ("ctrl+j", "insert_newline", "Newline"),
     ]
@@ -1315,6 +1337,11 @@ class SovwrenIDE(App):
         self.search_gate_enabled = False
         self.last_search_results = []  # Store recent search results for bookmark context
         self.last_search_query = ""    # The query that produced those results
+
+        # Council Gate (Friction Class VI extension - cloud consultation)
+        self.council_client = None  # Initialized on mount
+        self.council_gate_enabled = False
+        self.council_model = None  # Current Council model shortname
 
         # Context tracking (Phase 1 buckets)
         self.conversation_history = []  # List of (role, content) tuples
@@ -1469,6 +1496,9 @@ class SovwrenIDE(App):
 
         # Initialize Search Gate (Friction Class VI)
         await self._initialize_search_gate()
+
+        # Initialize Council Gate (Friction Class VI extension)
+        await self._initialize_council_gate()
 
         # Load existing memories into sidebar
         await self._refresh_memory_display()
@@ -1679,6 +1709,36 @@ class SovwrenIDE(App):
             stream.add_message(f"[green]Search Gate opened ({provider})[/green]", "system")
         else:
             stream.add_message("[dim]Search Gate closed (local-only)[/dim]", "system")
+
+    def action_toggle_council_gate(self) -> None:
+        """Toggle Council Gate (F6). Friction Class VI extension - consent for cloud consultation."""
+        if self.council_client is None:
+            stream = self.query_one(NeuralStream)
+            stream.add_message("[yellow]Council Gate not available (not initialized)[/yellow]", "system")
+            return
+
+        # Toggle the gate
+        self.council_gate_enabled = not self.council_gate_enabled
+
+        # Update UI
+        stream = self.query_one(NeuralStream)
+        status_bar = self.query_one(StatusBar)
+
+        # Sync the toggle switch
+        try:
+            switch = self.query_one("#toggle-council-gate", Switch)
+            switch.value = self.council_gate_enabled
+        except Exception:
+            pass
+
+        if self.council_gate_enabled:
+            # Get current council model name
+            model_name = self.council_model or "default"
+            status_bar.update_council_gate(model_name)
+            stream.add_message(f"[green]☁️ Council Gate opened ({model_name})[/green]", "system")
+        else:
+            status_bar.update_council_gate("Off")
+            stream.add_message("[dim]☁️ Council Gate closed (local-only)[/dim]", "system")
 
     async def _open_session_picker(self) -> None:
         try:
@@ -1967,6 +2027,148 @@ class SovwrenIDE(App):
 
         return self.DEFAULT_CONTEXT_WINDOW
 
+    async def _handle_council_command(self, message: str) -> None:
+        """Handle /council command for cloud model consultation.
+
+        Usage: /council <query>
+        Sends the query to the Council (cloud model) with current context.
+        """
+        stream = self.query_one(NeuralStream)
+
+        # Extract query from command
+        query = message[8:].strip() if len(message) > 8 else ""  # Remove "/council "
+
+        if not query:
+            stream.add_message("[yellow]/council requires a query. Usage: /council <your question>[/yellow]", "system")
+            # Remove from conversation history
+            if self.conversation_history and self.conversation_history[-1] == ("steward", message):
+                self.conversation_history.pop()
+            return
+
+        # Check if Council is available
+        if self.council_client is None:
+            stream.add_message("[yellow]Council not available. Set OPENROUTER_API_KEY environment variable.[/yellow]", "system")
+            return
+
+        # Check if Council Gate is open (consent)
+        if not self.council_gate_enabled:
+            stream.add_message("[yellow]Council Gate is closed. Enable it with F6 or the ☁️ toggle.[/yellow]", "system")
+            return
+
+        # Show consultation indicator
+        stream.add_message("[dim]☁️ Consulting Council...[/dim]", "system")
+
+        try:
+            # Get active file content if editor has a file open
+            active_file = None
+            try:
+                from textual.widgets import TabbedContent
+                tabbed = self.query_one("#tabbed-editor", TabbedContent)
+                if tabbed.active:
+                    # Get current tab's file content
+                    active_pane = tabbed.get_pane(tabbed.active)
+                    if active_pane:
+                        text_area = active_pane.query_one("TextArea")
+                        if text_area:
+                            # Get file extension from tab id
+                            ext = "." + tabbed.active.split(".")[-1] if "." in tabbed.active else ""
+                            active_file = (ext, text_area.text[:2000])
+            except Exception:
+                pass  # No active file, that's fine
+
+            # Build Brief and consult Council
+            response = await self.council_client.consult_with_context(
+                user_query=query,
+                mode=self.session_mode,
+                lens=self.session_lens,
+                context_band=self._last_context_band,
+                recent_turns=[{"role": r, "content": c} for r, c in self.conversation_history[-5:]],
+                request_type="general",
+                active_file=active_file,
+                node_assessment=None  # Let Council work with what it has
+            )
+
+            if response:
+                # Display Council response with distinct styling
+                stream.add_message(f"[#d4a574]☁️ Council ({self.council_model or 'cloud'}):[/#d4a574]", "system")
+                stream.add_message(f"[#e0d4c8]{response}[/#e0d4c8]", "council")
+
+                # Add to conversation history so NeMo has context
+                self.conversation_history.append(("council", f"[Council response to '{query}']: {response[:500]}..."))
+            else:
+                stream.add_message("[red]Council returned no response.[/red]", "error")
+
+        except Exception as e:
+            stream.add_message(f"[red]Council error: {e}[/red]", "error")
+
+    def _handle_seat_command(self, message: str) -> None:
+        """Handle /seat command for Council model switching.
+
+        Usage:
+            /seat              - List available Council models
+            /seat <model>      - Switch to specified model (partial match supported)
+
+        Examples:
+            /seat gemini-flash
+            /seat deepseek
+            /seat gpt-oss
+        """
+        stream = self.query_one(NeuralStream)
+
+        # Extract model name from command
+        parts = message.split(maxsplit=1)
+        model_arg = parts[1].strip() if len(parts) > 1 else ""
+
+        # Check if Council is available
+        if self.council_client is None:
+            stream.add_message("[yellow]Council not initialized.[/yellow]", "system")
+            return
+
+        # If no argument, list available models
+        if not model_arg:
+            models = self.council_client.models
+            current = self.council_client.current_model_shortname
+            provider = self.council_client.provider
+
+            stream.add_message(f"[b]Council Seats ({provider}):[/b]", "system")
+            for shortname, model_id in models.items():
+                marker = " [cyan]← current[/cyan]" if shortname == current else ""
+                stream.add_message(f"  • {shortname}: {model_id}{marker}", "system")
+            stream.add_message("[dim]Usage: /seat <model_name>[/dim]", "system")
+            return
+
+        # Try to switch to the specified model
+        # First try exact match
+        if self.council_client.switch_model(model_arg):
+            new_model = self.council_client.current_model
+            self.council_model = self.council_client.current_model_shortname
+            stream.add_message(f"[green]Council Seat assigned to: {new_model}[/green]", "system")
+
+            # Update status bar if Council is enabled
+            if self.council_gate_enabled:
+                status_bar = self.query_one(StatusBar)
+                status_bar.update_council_gate(self.council_model)
+            return
+
+        # Try partial match
+        models = self.council_client.models
+        matches = [k for k in models.keys() if model_arg.lower() in k.lower()]
+
+        if len(matches) == 1:
+            self.council_client.switch_model(matches[0])
+            new_model = self.council_client.current_model
+            self.council_model = self.council_client.current_model_shortname
+            stream.add_message(f"[green]Council Seat assigned to: {new_model}[/green]", "system")
+
+            if self.council_gate_enabled:
+                status_bar = self.query_one(StatusBar)
+                status_bar.update_council_gate(self.council_model)
+        elif len(matches) > 1:
+            stream.add_message(f"[yellow]Multiple matches: {', '.join(matches)}[/yellow]", "system")
+        else:
+            available = ", ".join(models.keys())
+            stream.add_message(f"[yellow]Model '{model_arg}' not found. Available: {available}[/yellow]", "system")
+
     async def connect_to_node(self) -> None:
         """Attempt to connect to LM Studio."""
         stream = self.query_one(NeuralStream)
@@ -2117,6 +2319,39 @@ class SovwrenIDE(App):
             stream.add_message(f"[yellow]Search Gate skipped: {e}[/yellow]", "system")
             self.search_manager = None
 
+    async def _initialize_council_gate(self) -> None:
+        """Initialize Council Gate (Friction Class VI extension).
+
+        The Council Gate defaults to closed (local-only).
+        Cloud consultation requires explicit consent via toggle.
+
+        Supports two backends:
+        - Ollama Cloud (default): Uses local Ollama to route to cloud models
+        - OpenRouter: Requires API key, provides access to GPT-4, Claude, etc.
+        """
+        stream = self.query_one(NeuralStream)
+
+        try:
+            from llm.council_client import council_client
+            from config import COUNCIL_PROVIDER, COUNCIL_DEFAULT_MODEL
+
+            self.council_client = council_client
+            self.council_model = COUNCIL_DEFAULT_MODEL
+
+            if council_client.is_available():
+                provider_name = "Ollama Cloud" if COUNCIL_PROVIDER == "ollama" else "OpenRouter"
+                model_name = council_client.current_model or COUNCIL_DEFAULT_MODEL
+                stream.add_message(f"[dim]Council Gate ready: {provider_name} ({model_name})[/dim]", "system")
+            else:
+                if COUNCIL_PROVIDER == "ollama":
+                    stream.add_message("[dim]Council Gate: Ollama (will connect when enabled)[/dim]", "system")
+                else:
+                    stream.add_message("[dim]Council Gate: No API key (set OPENROUTER_API_KEY)[/dim]", "system")
+
+        except Exception as e:
+            stream.add_message(f"[yellow]Council Gate skipped: {e}[/yellow]", "system")
+            self.council_client = None
+
     async def on_chat_input_submitted(self, event: ChatInput.Submitted) -> None:
         """Handle submission from ChatInput (Enter or Ctrl+Enter)."""
         self._reset_input_activity()  # Temporal empathy: user is active
@@ -2228,6 +2463,19 @@ class SovwrenIDE(App):
                     if self.conversation_history and self.conversation_history[-1] == ("steward", message):
                         self.conversation_history.pop()
                     return  # Don't send memory commands to LLM
+
+                # Check if this is a /council command
+                elif msg_lower.startswith('/council'):
+                    await self._handle_council_command(message)
+                    return  # Council command handled separately
+
+                # Check if this is a /seat command (Council model switching)
+                elif msg_lower.startswith('/seat'):
+                    self._handle_seat_command(message)
+                    # Remove from conversation history
+                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
+                        self.conversation_history.pop()
+                    return  # Seat command handled
 
                 # Check if asking about memories
                 elif any(p in msg_lower for p in ['what do you remember', 'what did i tell', 'do you know']):
@@ -2762,6 +3010,29 @@ Output ONLY valid JSON."""
             # Update status bar
             status_bar = self.query_one(StatusBar)
             status_bar.update_search_gate(self.search_manager.state.status_text())
+
+        elif event.switch.id == "toggle-council-gate":
+            # Friction Class VI extension: Council Gate consent toggle
+            if self.council_client is None:
+                stream = self.query_one(NeuralStream)
+                stream.add_message("[yellow]Council Gate not available (no API key)[/yellow]", "system")
+                # Reset switch to off
+                event.switch.value = False
+                return
+
+            stream = self.query_one(NeuralStream)
+            status_bar = self.query_one(StatusBar)
+            if event.value:
+                # Opening the gate
+                self.council_gate_enabled = True
+                model_name = self.council_model or "default"
+                status_bar.update_council_gate(model_name)
+                stream.add_message(f"[green]☁️ Council Gate opened ({model_name})[/green]", "system")
+            else:
+                # Closing the gate
+                self.council_gate_enabled = False
+                status_bar.update_council_gate("Off")
+                stream.add_message("[dim]☁️ Council Gate closed (local-only)[/dim]", "system")
 
     def action_clear_chat(self) -> None:
         """Clear the chat stream and conversation history."""

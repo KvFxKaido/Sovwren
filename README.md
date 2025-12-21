@@ -24,8 +24,29 @@ Sovwren makes these states explicit.
 - **Shared file tree** — see what the model sees
 - **Web search** — DuckDuckGo integration, no API key required
 - **RAG** — load local documents with source visibility
+- **Council Gate** — hybrid local+cloud consultation for heavy reasoning tasks
 
-Local-first. No cloud dependency. Connects to LM Studio or Ollama.
+Local-first. Cloud optional. Connects to LM Studio or Ollama.
+
+## Council Gate
+
+When your local model hits its limits, consult a cloud model without leaving the interface.
+
+```
+/council How should I structure this database schema?
+```
+
+The local model (NeMo) prepares a **Brief** with your current context, sends it to the cloud model (Council), and contextualizes the response. You see exactly what's happening — no silent escalation.
+
+**Commands:**
+- `F6` or ☁️ toggle — Enable/disable Council Gate
+- `/council <query>` — Send query to cloud model
+- `/seat` — List available cloud models
+- `/seat <model>` — Switch Council model (e.g., `/seat deepseek`)
+
+**Backends:**
+- **Ollama Cloud** (default) — Uses your local Ollama to route to cloud GPUs. Run `ollama login` to authenticate.
+- **OpenRouter** — Set `SOVWREN_COUNCIL_PROVIDER=openrouter` and `OPENROUTER_API_KEY` for access to GPT-4, Claude, etc.
 
 ## Installation
 

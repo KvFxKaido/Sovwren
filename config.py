@@ -41,7 +41,8 @@ TIMEOUTS = {
     "ollama_response": 300,  # 5 minutes
     "llm_response": 300,  # Generic LLM response timeout (5 minutes)
     "web_scraping": 45,
-    "search_gate": 30  # External search via Search Gate (Friction Class VI)
+    "search_gate": 30,  # External search via Search Gate (Friction Class VI)
+    "council_gate": 120  # Cloud model consultation (Friction Class VI extension)
 }
 
 # RAG settings
@@ -596,6 +597,158 @@ def get_hint_message(hint_key: str) -> str | None:
         mark_hint_seen(hint_key)
         return EPHEMERAL_HINTS.get(hint_key)
     return None
+
+
+# ==================== COUNCIL GATE (Cloud Consultation) ====================
+# Friction Class VI extension: Cloud compute as gated capability
+# The Council is a heavy-compute reasoning engine that NeMo can consult.
+# Like the Search Gate, this is a capability change, not a convenience toggle.
+
+# Council Gate default state: Local-only (cloud disabled by default)
+COUNCIL_GATE_DEFAULT = os.environ.get("SOVWREN_COUNCIL_GATE", "local")  # "local" or "cloud"
+
+# Cloud provider settings
+# "ollama" = Ollama Cloud (uses local Ollama server, routes to cloud transparently)
+# "openrouter" = OpenRouter API (requires OPENROUTER_API_KEY)
+COUNCIL_PROVIDER = os.environ.get("SOVWREN_COUNCIL_PROVIDER", "ollama")
+
+# Ollama settings (default - uses existing Ollama installation)
+COUNCIL_OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+
+# OpenRouter settings (alternative provider)
+COUNCIL_OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+COUNCIL_OPENROUTER_BASE = os.environ.get("COUNCIL_API_BASE", "https://openrouter.ai/api/v1")
+
+# Allowed cloud models per provider
+# Ollama Cloud models (run via local Ollama, routed to cloud)
+# These use datacenter GPUs via ollama.com - requires `ollama login`
+COUNCIL_OLLAMA_MODELS = {
+    "gemini-flash": "gemini-3-flash-preview",
+    "gemini-pro": "gemini-3-pro-preview",
+    "gpt-oss": "gpt-oss:120b-cloud",
+    "gpt-oss-20b": "gpt-oss:20b-cloud",
+    "deepseek": "deepseek-v3.1:671b-cloud",
+    "qwen-coder": "qwen3-coder:480b-cloud",
+}
+
+# OpenRouter models (if using OpenRouter as provider)
+COUNCIL_OPENROUTER_MODELS = {
+    "gpt-4o": "openai/gpt-4o",
+    "claude-sonnet": "anthropic/claude-sonnet-4",
+    "gemini-flash": "google/gemini-2.0-flash-001",
+    "deepseek-r1": "deepseek/deepseek-r1",
+    "qwen-72b": "qwen/qwen-2.5-72b-instruct",
+}
+
+# Default Council model (shortname from allowlist)
+COUNCIL_DEFAULT_MODEL = os.environ.get("SOVWREN_COUNCIL_MODEL", "gemini-flash")
+
+# Council Brief Template
+# This is what NeMo sends to the cloud model - a curated context package.
+COUNCIL_BRIEF_TEMPLATE = """## Council Brief
+
+**Session Mode:** {mode}
+**Lens State:** {lens}
+**Context Load:** {context_band}
+
+### Recent Context
+{recent_turns}
+
+### Active File (if relevant)
+```{file_extension}
+{file_content}
+```
+
+### The Steward's Question
+{user_query}
+
+### Node Assessment
+{node_assessment}
+
+### What I Need From Council
+{request_type}
+
+---
+Respond with structured analysis. I (the local Node) will contextualize your response for the Steward.
+"""
+
+# Request type descriptions for Brief construction
+COUNCIL_REQUEST_TYPES = {
+    "architecture": "Evaluate architectural options and trade-offs",
+    "debug": "Identify root cause and suggest fix",
+    "review": "Code review with specific actionable feedback",
+    "reasoning": "Multi-step reasoning through a complex problem",
+    "research": "Synthesize information across domains",
+    "general": "General heavy-compute reasoning assistance"
+}
+
+
+def build_council_brief(
+    mode: str,
+    lens: str,
+    context_band: str,
+    recent_turns: list,
+    user_query: str,
+    request_type: str = "general",
+    active_file: tuple = None,
+    node_assessment: str = None
+) -> str:
+    """Construct the Brief that NeMo sends to Council.
+
+    Args:
+        mode: Current session mode (Workshop/Sanctuary)
+        lens: Current lens state (Blue/Red/Purple)
+        context_band: Current context load band string
+        recent_turns: List of recent conversation turns [{"role": str, "content": str}]
+        user_query: The Steward's current question
+        request_type: Type of request (architecture/debug/review/reasoning/research/general)
+        active_file: Optional tuple of (extension, content) for active file
+        node_assessment: Optional NeMo's assessment of the situation
+
+    Returns:
+        Formatted Brief string ready to send to Council
+    """
+    # Format recent turns (last 5, truncated)
+    turns_text = ""
+    if recent_turns:
+        formatted_turns = []
+        for t in recent_turns[-5:]:
+            role_marker = ">" if t.get("role") == "user" else "<"
+            content = t.get("content", "")[:500]
+            if len(t.get("content", "")) > 500:
+                content += "..."
+            formatted_turns.append(f"{role_marker} {content}")
+        turns_text = "\n".join(formatted_turns)
+    else:
+        turns_text = "(no prior context)"
+
+    # Node's assessment
+    assessment = node_assessment or "Steward needs heavy reasoning support beyond local capacity."
+
+    # File content if relevant
+    file_ext = ""
+    file_content = "(none)"
+    if active_file:
+        file_ext = active_file[0] if active_file[0] else ""
+        content = active_file[1] if len(active_file) > 1 else ""
+        file_content = content[:2000]
+        if len(content) > 2000:
+            file_content += "\n... (truncated)"
+
+    # Request type description
+    request_desc = COUNCIL_REQUEST_TYPES.get(request_type, COUNCIL_REQUEST_TYPES["general"])
+
+    return COUNCIL_BRIEF_TEMPLATE.format(
+        mode=mode,
+        lens=lens,
+        context_band=context_band or "Unknown",
+        recent_turns=turns_text,
+        file_extension=file_ext,
+        file_content=file_content,
+        user_query=user_query,
+        node_assessment=assessment,
+        request_type=request_desc
+    )
 
 
 def build_system_prompt_from_profile(

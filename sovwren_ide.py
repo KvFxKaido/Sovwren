@@ -807,6 +807,9 @@ class StatusBar(Static):
 class ChatInput(TextArea):
     """Custom TextArea that submits on Enter."""
 
+    # Prevent TextArea's default bindings from showing in Footer
+    BINDINGS = []
+
     class Submitted(Message):
         """Fired when user submits the message."""
         def __init__(self, value: str) -> None:
@@ -1231,6 +1234,8 @@ class SovwrenIDE(App):
     Footer {
         background: #000000;
         color: #505050;
+        dock: bottom;
+        height: 1;
     }
     FooterKey {
         background: #0a0a0a;

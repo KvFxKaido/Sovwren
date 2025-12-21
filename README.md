@@ -67,6 +67,8 @@ pip install -r requirements.txt
 python sovwren_ide.py
 ```
 
+Windows shortcut: pin `run-sovwren.bat` (not a `.lnk` inside the repo) to Start/Taskbar via Explorer.
+
 ### LLM Backend
 
 Start one of:

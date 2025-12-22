@@ -15,6 +15,7 @@ from typing import List, Optional, Tuple
 from config import SEARCH_GATE_DEFAULT
 from .base import SearchAdapter, SearchResult, SearchError
 from .duckduckgo import DuckDuckGoSearchAdapter
+from .ollama import OllamaSearchAdapter
 
 
 @dataclass
@@ -78,6 +79,11 @@ class SearchManager:
         ddg = DuckDuckGoSearchAdapter()
         if ddg.is_configured:
             self._adapters["DuckDuckGo"] = ddg
+
+        # Ollama - requires OLLAMA_API_KEY
+        ollama = OllamaSearchAdapter()
+        if ollama.is_configured:
+            self._adapters["Ollama"] = ollama
 
         # Set first available adapter as default
         if self._adapters:

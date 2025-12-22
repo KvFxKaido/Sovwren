@@ -15,6 +15,7 @@ It uses the API as a dynamic indexer, preserving chain of custody.
 
 from .base import SearchAdapter, SearchResult, SearchError
 from .duckduckgo import DuckDuckGoSearchAdapter
+from .ollama import OllamaSearchAdapter
 from .manager import SearchManager, SearchGateState, search_manager
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "SearchResult",
     "SearchError",
     "DuckDuckGoSearchAdapter",
+    "OllamaSearchAdapter",
     "SearchManager",
     "SearchGateState",
     "search_manager",

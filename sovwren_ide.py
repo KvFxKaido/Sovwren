@@ -11,9 +11,10 @@ Usage:
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Header, Footer, Static, Input, Button, DirectoryTree, Label, Switch, TextArea, TabbedContent, TabPane
+from textual.widgets import Header, Footer, Static, Input, Button, DirectoryTree, Label, Switch, TextArea, TabbedContent, TabPane, Collapsible
 from textual.screen import Screen
 from textual.reactive import reactive
+from textual.binding import Binding
 from textual.message import Message
 from textual import events
 import asyncio
@@ -653,50 +654,77 @@ class WorkspaceTree(Vertical):
 
 
 class ProtocolDeck(Vertical):
-    """Class IV & V: Protocol Invocation & Idleness."""
+    """Truth Strip companion: essential controls visible, rest collapsed."""
+
     def compose(self) -> ComposeResult:
-        yield Label("[b]Lens[/b]", classes="panel-header")
-        with Horizontal(classes="button-row"):
-            yield Button("🔵", id="lens-blue", classes="lens-btn active")
-            yield Button("🔴", id="lens-red", classes="lens-btn")
-            yield Button("🟣", id="lens-purple", classes="lens-btn")
-
-        yield Label("[b]Actions[/b]", classes="panel-header")
-        yield Button("📑 Bookmark", id="btn-bookmark", classes="proto-btn proto-btn-accent")
-        yield Button("🧵 Sessions", id="btn-sessions", classes="proto-btn")
-        yield Button("🤖 Models", id="btn-models", classes="proto-btn")
-        yield Button("🪞 Profiles", id="btn-profiles", classes="proto-btn")
-
-        yield Label("[b]Presence[/b]", classes="panel-header panel-header-spaced")
-        with Horizontal(classes="toggle-row"):
-            yield Label("🌙", classes="toggle-label")
-            yield Switch(value=False, id="toggle-idleness")
-
+        # Essential controls - always visible (Truth Strip answers)
         yield Label("[b]Mode[/b]", classes="panel-header")
         with Horizontal(classes="button-row"):
-            yield Button("🛠 Workshop", id="mode-workshop", classes="mode-btn active")
-            yield Button("🕯 Sanctuary", id="mode-sanctuary", classes="mode-btn")
+            workshop_btn = Button("🛠 Workshop", id="mode-workshop", classes="mode-btn active")
+            workshop_btn.tooltip = "Task-focused, direct output"
+            yield workshop_btn
+            sanctuary_btn = Button("🕯 Sanctuary", id="mode-sanctuary", classes="mode-btn")
+            sanctuary_btn.tooltip = "Reflective, pressure-free"
+            yield sanctuary_btn
 
-        yield Label("[b]Git[/b]", classes="panel-header panel-header-spaced")
-        with Horizontal(classes="button-row"):
-            yield Button("📥", id="btn-git-pull", classes="git-btn")
-            yield Button("📝", id="btn-git-commit", classes="git-btn")
-            yield Button("📤", id="btn-git-push", classes="git-btn")
-
-        yield Label("[b]Search[/b]", classes="panel-header panel-header-spaced")
+        yield Label("[b]Gates[/b]", classes="panel-header panel-header-spaced")
         with Horizontal(classes="toggle-row"):
-            yield Label("🌐", classes="toggle-label")
+            yield Label("🌐 Web", classes="toggle-label")
             yield Switch(value=False, id="toggle-search-gate")
-
-        yield Label("[b]Council[/b]", classes="panel-header panel-header-spaced")
         with Horizontal(classes="toggle-row"):
-            yield Label("☁️", classes="toggle-label")
+            yield Label("☁️ Cloud", classes="toggle-label")
             yield Switch(value=False, id="toggle-council-gate")
 
-        yield Label("[b]Debug[/b]", classes="panel-header panel-header-spaced")
-        with Horizontal(classes="toggle-row"):
-            yield Label("🔍", classes="toggle-label")
-            yield Switch(value=False, id="toggle-rag-debug")
+        # Secondary controls - collapsed by default
+        with Collapsible(title="⋮ More", collapsed=True, id="settings-drawer"):
+            yield Label("[b]Lens[/b]", classes="panel-header")
+            with Horizontal(classes="button-row"):
+                blue_btn = Button("🔵", id="lens-blue", classes="lens-btn active")
+                blue_btn.tooltip = "Blue — Analytical"
+                yield blue_btn
+                red_btn = Button("🔴", id="lens-red", classes="lens-btn")
+                red_btn.tooltip = "Red — Direct"
+                yield red_btn
+                purple_btn = Button("🟣", id="lens-purple", classes="lens-btn")
+                purple_btn.tooltip = "Purple — Reflective"
+                yield purple_btn
+
+            yield Label("[b]Actions[/b]", classes="panel-header")
+            with Horizontal(classes="button-row"):
+                bookmark_btn = Button("📑", id="btn-bookmark", classes="action-btn action-btn-accent")
+                bookmark_btn.tooltip = "Bookmark"
+                yield bookmark_btn
+                sessions_btn = Button("🧵", id="btn-sessions", classes="action-btn")
+                sessions_btn.tooltip = "Sessions"
+                yield sessions_btn
+                models_btn = Button("🤖", id="btn-models", classes="action-btn")
+                models_btn.tooltip = "Models"
+                yield models_btn
+                profiles_btn = Button("🪞", id="btn-profiles", classes="action-btn")
+                profiles_btn.tooltip = "Profiles"
+                yield profiles_btn
+
+            yield Label("[b]Presence[/b]", classes="panel-header panel-header-spaced")
+            with Horizontal(classes="toggle-row"):
+                yield Label("🌙 Idle", classes="toggle-label")
+                yield Switch(value=False, id="toggle-idleness")
+
+            yield Label("[b]Git[/b]", classes="panel-header panel-header-spaced")
+            with Horizontal(classes="button-row"):
+                pull_btn = Button("📥", id="btn-git-pull", classes="git-btn")
+                pull_btn.tooltip = "Git Pull"
+                yield pull_btn
+                commit_btn = Button("📝", id="btn-git-commit", classes="git-btn")
+                commit_btn.tooltip = "Git Commit"
+                yield commit_btn
+                push_btn = Button("📤", id="btn-git-push", classes="git-btn")
+                push_btn.tooltip = "Git Push"
+                yield push_btn
+
+            yield Label("[b]Debug[/b]", classes="panel-header panel-header-spaced")
+            with Horizontal(classes="toggle-row"):
+                yield Label("🔍 RAG", classes="toggle-label")
+                yield Switch(value=False, id="toggle-rag-debug")
 
 
 class NeuralStream(ScrollableContainer):
@@ -715,13 +743,15 @@ class NeuralStream(ScrollableContainer):
 
 
 class StatusBar(Static):
-    """Bottom status showing connection state."""
+    """Truth Strip: answers Who, What, Cost in one glance."""
     connected = reactive(False)
     model_name = reactive("Not connected")
     context_band = reactive("Unknown")
     profile_name = reactive("NeMo")
     search_gate = reactive("Local")  # "Local" or "Web (Provider)"
     council_gate = reactive("Off")  # "Off" or model shortname
+    mode = reactive("Workshop")  # "Workshop" or "Sanctuary"
+    lens = reactive("Blue")  # "Blue", "Red", or "Purple"
 
     # Moon phases for context load: empty → filling → half → full
     CONTEXT_GLYPHS = {
@@ -729,6 +759,13 @@ class StatusBar(Static):
         "Medium": "◔",   # Quarter - filling up
         "High": "◑",     # Half - getting full
         "Critical": "●", # Full moon - at capacity
+    }
+
+    # Lens glyphs for compact display
+    LENS_GLYPHS = {
+        "Blue": "🔵",
+        "Red": "🔴",
+        "Purple": "🟣",
     }
 
     def _get_context_glyph(self) -> str:
@@ -740,6 +777,10 @@ class StatusBar(Static):
         elif "Medium" in self.context_band:
             return self.CONTEXT_GLYPHS["Medium"]
         return self.CONTEXT_GLYPHS["Low"]
+
+    def _get_lens_glyph(self) -> str:
+        """Get lens glyph for compact display."""
+        return self.LENS_GLYPHS.get(self.lens, "🔵")
 
     def _get_search_indicator(self) -> str:
         """Get search gate indicator."""
@@ -753,14 +794,22 @@ class StatusBar(Static):
             return ""  # Hidden when off
         return "☁️"  # Cloud when enabled
 
+    def _get_mode_indicator(self) -> str:
+        """Get mode indicator."""
+        if self.mode == "Workshop":
+            return "🛠"
+        return "🕯"
+
     def _build_status_text(self) -> str:
-        """Build the full status text string."""
+        """Build Truth Strip: Mode | Lens | Node | Connected."""
         status = "Connected" if self.connected else "Disconnected"
-        # Escape brackets for Rich markup (otherwise [NeMo] is treated as a style tag)
-        return f"\\[{self.profile_name}] Node: {self.model_name} | {status}"
+        return f"{self.mode} | {self.profile_name}: {self.model_name} | {status}"
 
     def compose(self) -> ComposeResult:
+        # Truth Strip layout: [Mode] [Lens] [Context●] [🔒/🌐] [☁️] [Node info]
         with Horizontal(id="status-bar-content"):
+            yield Label(self._get_mode_indicator(), id="mode-glyph")
+            yield Label(self._get_lens_glyph(), id="lens-glyph")
             yield Label(self._get_context_glyph(), id="context-glyph")
             yield Label(self._get_search_indicator(), id="search-glyph")
             yield Label(self._get_council_indicator(), id="council-glyph")
@@ -769,13 +818,27 @@ class StatusBar(Static):
     def update_status(self, connected: bool, model: str = ""):
         self.connected = connected
         self.model_name = model or ("Ready" if connected else "Not connected")
-        self.query_one("#status-text", Label).update(self._build_status_text())
+        self._refresh_status_text()
 
     def update_profile(self, profile_name: str):
         """Update the profile name in status bar."""
         self.profile_name = profile_name
+        self._refresh_status_text()
+
+    def update_mode(self, mode: str):
+        """Update the mode in Truth Strip."""
+        self.mode = mode
         try:
-            self.query_one("#status-text", Label).update(self._build_status_text())
+            self.query_one("#mode-glyph", Label).update(self._get_mode_indicator())
+            self._refresh_status_text()
+        except Exception:
+            pass
+
+    def update_lens(self, lens: str):
+        """Update the lens in Truth Strip."""
+        self.lens = lens
+        try:
+            self.query_one("#lens-glyph", Label).update(self._get_lens_glyph())
         except Exception:
             pass
 
@@ -800,6 +863,13 @@ class StatusBar(Static):
         self.council_gate = status
         try:
             self.query_one("#council-glyph", Label).update(self._get_council_indicator())
+        except Exception:
+            pass
+
+    def _refresh_status_text(self):
+        """Refresh the status text label."""
+        try:
+            self.query_one("#status-text", Label).update(self._build_status_text())
         except Exception:
             pass
 
@@ -911,10 +981,13 @@ class TabbedEditor(Vertical):
         self.active_file: str = None
 
     def compose(self) -> ComposeResult:
-        yield Label("[b]Editor[/b]", classes="panel-header")
         with Horizontal(id="editor-toolbar"):
-            yield Button("💾 Save", id="btn-save", classes="editor-btn")
-            yield Button("✕ Close", id="btn-close-tab", classes="editor-btn")
+            save_btn = Button("💾", id="btn-save", classes="editor-btn")
+            save_btn.tooltip = "Save (Ctrl+S)"
+            yield save_btn
+            close_btn = Button("✕", id="btn-close-tab", classes="editor-btn")
+            close_btn.tooltip = "Close Tab (Ctrl+W)"
+            yield close_btn
             yield Static("", id="editor-status")
         yield TabbedContent(id="editor-tabs")
 
@@ -1046,6 +1119,14 @@ class SovwrenIDE(App):
     Screen {
         layout: vertical;
         background: #000000;
+        /* Dark minimal scrollbar - nearly invisible until needed */
+        scrollbar-background: #000000;
+        scrollbar-background-hover: #000000;
+        scrollbar-background-active: #000000;
+        scrollbar-color: #1a1a1a;
+        scrollbar-color-hover: #2a2a2a;
+        scrollbar-color-active: #3a3a3a;
+        scrollbar-corner-color: #000000;
     }
 
     /* Layout Containers - Three Column: Tree | Editor | Chat */
@@ -1054,8 +1135,32 @@ class SovwrenIDE(App):
     #editor-panel { width: 40%; height: 100%; border-right: solid #1a1a1a; background: #000000; }
     #chat-panel { width: 1fr; height: 100%; background: #000000; }
 
-    /* Right Panel Layout - ensure ProtocolDeck doesn't overflow */
-    ProtocolDeck { height: auto; max-height: 50%; overflow-y: auto; }
+    /* Right Panel Layout - ProtocolDeck with collapsible drawer */
+    ProtocolDeck {
+        height: auto;
+        max-height: 60%;
+        overflow-y: auto;
+        scrollbar-background: #000000;
+        scrollbar-background-hover: #000000;
+        scrollbar-background-active: #000000;
+        scrollbar-color: #1a1a1a;
+        scrollbar-color-hover: #2a2a2a;
+        scrollbar-color-active: #3a3a3a;
+    }
+    /* Collapsible drawer styling */
+    #settings-drawer {
+        background: #050505;
+        border: solid #1a1a1a;
+        margin-top: 1;
+    }
+    #settings-drawer CollapsibleTitle {
+        color: #606060;
+        background: #0a0a0a;
+    }
+    #settings-drawer CollapsibleTitle:hover {
+        color: #909090;
+        background: #151515;
+    }
     NeuralStream { height: 1fr; min-height: 30%; }
 
     /* Tabbed Editor */
@@ -1065,14 +1170,14 @@ class SovwrenIDE(App):
     #editor-tabs TabPane { height: 100%; padding: 0; }
     #editor-tabs TextArea { height: 100%; background: #050505; border: none; }
     #editor-toolbar {
-        height: 4;
+        height: 3;
         background: #0a0a0a;
         border-bottom: solid #1a1a1a;
         align: left middle;
         padding: 0 1;
     }
     .editor-btn {
-        min-width: 12;
+        min-width: 5;
         height: 3;
         margin-right: 1;
         content-align: center middle;
@@ -1158,9 +1263,9 @@ class SovwrenIDE(App):
     /* Git buttons */
     .git-btn { min-width: 6; margin: 0; }
 
-    /* Protocol buttons */
-    .proto-btn { width: 100%; margin: 0; }
-    .proto-btn-accent {
+    /* Action buttons - compact icon row */
+    .action-btn { min-width: 6; margin: 0; }
+    .action-btn-accent {
         color: #b0954a;
         border: solid #b0954a;
     }
@@ -1170,6 +1275,23 @@ class SovwrenIDE(App):
         background: #000000;
         padding: 0 1;
         border: solid #1a1a1a;
+        scrollbar-background: #000000;
+        scrollbar-background-hover: #000000;
+        scrollbar-background-active: #000000;
+        scrollbar-color: #1a1a1a;
+        scrollbar-color-hover: #2a2a2a;
+        scrollbar-color-active: #3a3a3a;
+    }
+
+    /* Universal scrollbar fallback for any scrollable widget */
+    * {
+        scrollbar-background: #000000;
+        scrollbar-background-hover: #000000;
+        scrollbar-background-active: #000000;
+        scrollbar-color: #1a1a1a;
+        scrollbar-color-hover: #2a2a2a;
+        scrollbar-color-active: #3a3a3a;
+        scrollbar-corner-color: #000000;
     }
     .message { margin-bottom: 0; padding: 0 1; }
     .system { color: #505050; }
@@ -1226,6 +1348,24 @@ class SovwrenIDE(App):
         border: solid #221a2c;  /* ~25% of #8a6ab0 */
     }
 
+    /* Node voice inherits Mode accent: "the room colors the voice" */
+    .mode-workshop .node {
+        color: #6a9ad0;  /* Muted blue — Workshop's analytical tone */
+    }
+    .mode-sanctuary .node {
+        color: #b08ad0;  /* Soft violet — Sanctuary's reflective tone */
+    }
+
+    /* Scrollbar thumb follows focus: picks up mode accent on hover/drag */
+    .mode-workshop * {
+        scrollbar-color-hover: #3a5a7a;  /* Muted blue tint */
+        scrollbar-color-active: #4a7ab0;  /* Workshop accent */
+    }
+    .mode-sanctuary * {
+        scrollbar-color-hover: #5a4a6a;  /* Muted violet tint */
+        scrollbar-color-active: #8a6ab0;  /* Sanctuary accent */
+    }
+
     /* Header/Footer */
     Header {
         background: #000000;
@@ -1256,21 +1396,25 @@ class SovwrenIDE(App):
     $scrollbar-background-active: #9a7ac0;
     """
 
+    # Essential bindings shown in footer (trim to avoid "icon salad")
+    # All bindings still work — /help lists them all
     BINDINGS = [
         ("ctrl+q", "quit", "Quit"),
-        ("ctrl+l", "clear_chat", "Clear"),
-        ("ctrl+b", "toggle_sidebar", "Toggle Sidebar"),
-        ("ctrl+r", "sessions", "Sessions"),
         ("ctrl+s", "save_file", "Save"),
-        ("ctrl+w", "close_tab", "Close Tab"),
-        ("f1", "profiles", "Profiles"),
-        ("f2", "models", "Models"),
+        ("ctrl+l", "clear_chat", "Clear"),
         ("f3", "consent_check", "Consent"),
-        ("f4", "log_rupture", "Rupture"),
-        ("f5", "toggle_search_gate", "Search Gate"),
-        ("f6", "toggle_council_gate", "Council Gate"),
-        ("ctrl+o", "open_external", "Open in Editor"),
-        ("ctrl+j", "insert_newline", "Newline"),
+        ("f1", "show_help", "Help"),
+        # Hidden bindings (work but don't clutter footer)
+        Binding("ctrl+b", "toggle_sidebar", "Toggle Sidebar", show=False),
+        Binding("ctrl+r", "sessions", "Sessions", show=False),
+        Binding("ctrl+w", "close_tab", "Close Tab", show=False),
+        Binding("f2", "models", "Models", show=False),
+        Binding("f4", "log_rupture", "Rupture", show=False),
+        Binding("f5", "toggle_search_gate", "Search Gate", show=False),
+        Binding("f6", "toggle_council_gate", "Council Gate", show=False),
+        Binding("f7", "profiles", "Profiles", show=False),
+        Binding("ctrl+o", "open_external", "Open in Editor", show=False),
+        Binding("ctrl+j", "insert_newline", "Newline", show=False),
     ]
 
     def get_system_commands(self, screen):
@@ -1692,6 +1836,39 @@ class SovwrenIDE(App):
         stream = self.query_one(NeuralStream)
         stream.add_message("[red]--- RUPTURE LOGGED ---[/red]", "system")
         stream.add_message("[dim]Misattunement noted. Consider repair before proceeding.[/dim]", "system")
+
+    def action_show_help(self) -> None:
+        """Show all keybindings and commands (F1 or /help)."""
+        stream = self.query_one(NeuralStream)
+        stream.add_message("[bold cyan]═══ HELP ═══[/bold cyan]", "system")
+
+        # Keybindings
+        stream.add_message("[bold]Keybindings:[/bold]", "system")
+        stream.add_message("[dim]  Ctrl+Q   Quit[/dim]", "system")
+        stream.add_message("[dim]  Ctrl+S   Save file[/dim]", "system")
+        stream.add_message("[dim]  Ctrl+L   Clear chat[/dim]", "system")
+        stream.add_message("[dim]  Ctrl+W   Close tab[/dim]", "system")
+        stream.add_message("[dim]  Ctrl+B   Toggle sidebar[/dim]", "system")
+        stream.add_message("[dim]  Ctrl+R   Sessions[/dim]", "system")
+        stream.add_message("[dim]  Ctrl+O   Open in external editor[/dim]", "system")
+        stream.add_message("[dim]  Ctrl+J   Insert newline[/dim]", "system")
+        stream.add_message("[dim]  F1       This help[/dim]", "system")
+        stream.add_message("[dim]  F2       Models[/dim]", "system")
+        stream.add_message("[dim]  F3       Consent checkpoint[/dim]", "system")
+        stream.add_message("[dim]  F4       Log rupture[/dim]", "system")
+        stream.add_message("[dim]  F5       Toggle web search[/dim]", "system")
+        stream.add_message("[dim]  F6       Toggle cloud council[/dim]", "system")
+        stream.add_message("[dim]  F7       Profiles[/dim]", "system")
+
+        # Slash commands
+        stream.add_message("[bold]Commands:[/bold]", "system")
+        stream.add_message("[dim]  /help              Show this help[/dim]", "system")
+        stream.add_message("[dim]  /clear             Clear chat[/dim]", "system")
+        stream.add_message("[dim]  /bookmark <name>   Save bookmark[/dim]", "system")
+        stream.add_message("[dim]  /session           Session info[/dim]", "system")
+        stream.add_message("[dim]  /context           Context info[/dim]", "system")
+        stream.add_message("[dim]  /confirm-yes       Approve pending action[/dim]", "system")
+        stream.add_message("[dim]  /confirm-no        Cancel pending action[/dim]", "system")
 
     def action_toggle_search_gate(self) -> None:
         """Toggle Search Gate (F5). Friction Class VI - consent for web search."""
@@ -2619,6 +2796,13 @@ class SovwrenIDE(App):
                         self.conversation_history.pop()
                     return
 
+                # Help command
+                if msg_lower == "/help":
+                    self.action_show_help()
+                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
+                        self.conversation_history.pop()
+                    return
+
                 # Check if this is a memory store command
                 if msg_lower.startswith(('remember:', 'store:', 'save:')):
                     content = message.split(':', 1)[1].strip() if ':' in message else message
@@ -2843,6 +3027,8 @@ class SovwrenIDE(App):
                 hint = get_hint_message("purple_first")
                 if hint:
                     stream.add_message(f"    ↳ {hint}", "hint")
+            # Update Truth Strip
+            self.query_one(StatusBar).update_lens(self.session_lens)
 
         # Mode buttons
         elif button_id in ("mode-workshop", "mode-sanctuary"):
@@ -2867,6 +3053,8 @@ class SovwrenIDE(App):
                 hint = get_hint_message("sanctuary_first")
                 if hint:
                     stream.add_message(f"    ↳ {hint}", "hint")
+            # Update Truth Strip
+            self.query_one(StatusBar).update_mode(self.session_mode)
 
         # Protocol buttons
         elif button_id == "btn-bookmark":

@@ -780,6 +780,11 @@ class BottomDock(Vertical):
                     yield Button("🔵", id="dock-lens-blue", classes="lens-btn active")
                     yield Button("🔴", id="dock-lens-red", classes="lens-btn")
                     yield Button("🟣", id="dock-lens-purple", classes="lens-btn")
+                
+                # Actions
+                yield Label("[b]Actions[/b]", classes="panel-header")
+                with Horizontal(classes="button-row"):
+                    yield Button("📑 Bookmark", id="dock-bookmark-btn")
 
     def update_context_display(self, context_text: str):
         """Update the context status in the dock."""
@@ -2033,6 +2038,9 @@ class SovwrenIDE(App):
             asyncio.create_task(self._save_spine_editor())
         elif button_id == "btn-spine-close":
             self._close_spine_editor()
+        # Bookmark buttons (sidebar + dock)
+        elif button_id in ("btn-bookmark", "dock-bookmark-btn"):
+            asyncio.create_task(self.initiate_bookmark_weave())
 
     async def _save_spine_editor(self) -> None:
         """Save the current spine editor file."""

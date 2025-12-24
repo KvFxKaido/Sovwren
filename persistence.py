@@ -452,7 +452,7 @@ if __name__ == "__main__":
     db = SovwrenDB(Path.cwd() / ".sovwren" / "sovwren.db")
     sess = db.begin_session(
         project_root=Path.cwd(),
-        node=NodeInfo(name="NeMo", provider="LM Studio", model="ministral-3-8b-reasoning-2512"),
+        node=NodeInfo(name="Sovwren", provider="LM Studio", model="ministral-3-8b-reasoning-2512"),
         initial_state=SessionState(lens="Blue", mode="Workshop", idleness=False, energy="Steady"),
     )
     db.append_message(sess, "steward", "Hey")
@@ -460,7 +460,7 @@ if __name__ == "__main__":
     db.log_event(sess, kind="consent_checkpoint", by="steward", payload={"note": "slow down"})
     db.record_context(sess, turn_id=3, band="Low", retrieved_files=["MYTH ENGINE - Living Document (v1.7).md"], approx_tokens_conv=3200, approx_tokens_ret=1100)
     db.update_state(sess, idleness=True)  # state_changed event emitted
-    tid = db.save_ticket(sess, seed_excerpt="...", summary="Pattern: context transitions feel sharp", participants=["Shawn", "NeMo"], status="open")
+    tid = db.save_ticket(sess, seed_excerpt="...", summary="Pattern: context transitions feel sharp", participants=["Shawn", "Sovwren"], status="open")
     print(json.dumps(db.export_session_json(sess), indent=2))
     db.end_session(sess)
     db.close()

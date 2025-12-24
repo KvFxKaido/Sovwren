@@ -167,17 +167,16 @@ class CommitModal(Screen):
 # Profile-specific splash art
 # Full versions for splash screen, compact versions for chat window
 SPLASH_ART = {
-    "nemo": {
+    "sovwren": {
         "ascii": r"""
-    ███╗   ██╗███████╗███╗   ███╗ ██████╗
-    ████╗  ██║██╔════╝████╗ ████║██╔═══██╗
-    ██╔██╗ ██║█████╗  ██╔████╔██║██║   ██║
-    ██║╚██╗██║██╔══╝  ██║╚██╔╝██║██║   ██║
-    ██║ ╚████║███████╗██║ ╚═╝ ██║╚██████╔╝
-    ╚═╝  ╚═══╝╚══════╝╚═╝     ╚═╝ ╚═════╝
+███████╗ ██████╗ ██╗   ██╗██╗    ██╗██████╗ ███████╗███╗   ██╗
+██╔════╝██╔═══██╗██║   ██║██║    ██║██╔══██╗██╔════╝████╗  ██║
+███████╗██║   ██║██║   ██║██║ █╗ ██║██████╔╝█████╗  ██╔██╗ ██║
+╚════██║██║   ██║╚██╗ ██╔╝██║███╗██║██╔══██╗██╔══╝  ██║╚██╗██║
+███████║╚██████╔╝ ╚████╔╝ ╚███╔███╔╝██║  ██║███████╗██║ ╚████║
+╚══════╝ ╚═════╝   ╚═══╝   ╚══╝╚══╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
         """,
         "ascii_compact": "═══ SOVWREN ═══",
-        "tagline": "Partnership-First Interface",
         "color": "bright_magenta",
     },
     "oracle": {
@@ -190,7 +189,6 @@ SPLASH_ART = {
      ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚══════╝
         """,
         "ascii_compact": "═══ ORACLE ═══",
-        "tagline": "Patterns into Reflection",
         "color": "purple",
     },
 }
@@ -210,12 +208,6 @@ class SplashScreen(Screen):
         content-align: center middle;
         color: #8a6ab0;
     }
-    #splash-tagline {
-        text-align: center;
-        width: 100%;
-        margin-top: 1;
-        color: #606060;
-    }
     #splash-hint {
         text-align: center;
         width: 100%;
@@ -224,17 +216,15 @@ class SplashScreen(Screen):
     }
     """
 
-    def __init__(self, profile: str = "nemo"):
+    def __init__(self, profile: str = "sovwren"):
         super().__init__()
         self.profile = profile
-        self.splash_data = SPLASH_ART.get(profile, SPLASH_ART["nemo"])
+        self.splash_data = SPLASH_ART.get(profile, SPLASH_ART["sovwren"])
 
     def compose(self) -> ComposeResult:
         ascii_art = self.splash_data.get("ascii", "")
-        tagline = self.splash_data.get("tagline", "")
 
         yield Static(ascii_art, id="splash-art")
-        yield Static(tagline, id="splash-tagline")
         yield Static("Press any key to continue...", id="splash-hint")
 
     def on_key(self, event) -> None:
@@ -1980,7 +1970,7 @@ class SovwrenIDE(App):
         self.connected = False
         self.current_backend = "lmstudio"  # "lmstudio" or "ollama"
         self.current_profile = None  # Loaded profile dict
-        self.current_profile_name = "nemo"  # Profile key string
+        self.current_profile_name = "sovwren"  # Profile key string
         self.assistant_display_name = os.environ.get("SOVWREN_ASSISTANT_NAME", "Sovwren")
         self.session_mode = "Workshop"
         self.session_lens = "Blue"
@@ -2104,8 +2094,8 @@ class SovwrenIDE(App):
 
 
     async def on_mount(self) -> None:
-        self.title = "Sovwren IDE v0.1"
-        self.sub_title = "Partnership-First Interface"
+        self.title = "Sovwren v0.1"
+        self.sub_title = ""
 
         # Set initial mode for border color
         self.add_class("mode-workshop")
@@ -2146,11 +2136,11 @@ class SovwrenIDE(App):
         except Exception:
             pass
 
-        # Load saved profile preference (default to nemo)
-        splash_profile = "nemo"
+        # Load saved profile preference (default to sovwren)
+        splash_profile = "sovwren"
         if self.db:
             try:
-                saved_profile = await self.db.get_preference(self.PREF_LAST_PROFILE_KEY, default="nemo")
+                saved_profile = await self.db.get_preference(self.PREF_LAST_PROFILE_KEY, default="sovwren")
                 if saved_profile and saved_profile in SPLASH_ART:
                     splash_profile = saved_profile
                     self.current_profile_name = saved_profile
@@ -3281,11 +3271,10 @@ class SovwrenIDE(App):
                 child.remove()
 
             # Show new profile's ASCII art (compact version for chat window)
-            splash_data = SPLASH_ART.get(profile_key, SPLASH_ART.get("nemo"))
+            splash_data = SPLASH_ART.get(profile_key, SPLASH_ART.get("sovwren"))
             if splash_data:
                 ascii_art = splash_data.get("ascii_compact", splash_data.get("ascii", ""))
                 stream.add_message(ascii_art, "system")
-                stream.add_message(splash_data.get("tagline", ""), "system")
 
             stream.add_message(f"[bold #8a6ab0]Profile: {profile_name}[/bold #8a6ab0]", "system")
 
@@ -4175,7 +4164,7 @@ class SovwrenIDE(App):
             # Show file-based sources (these cost tokens)
             for source in sources_used:
                 if source == "Memory Store":
-                    display_lines.append(f"[cyan]📁 Memory/nemo_memory.json[/cyan]")
+                    display_lines.append(f"[cyan]📁 Memory/memory.json[/cyan]")
                 else:
                     # RAG document
                     display_lines.append(f"[green]📄 {source}[/green]")
@@ -5104,7 +5093,7 @@ Output ONLY valid JSON."""
             pass  # Non-fatal: don't interrupt UX for logging failures
 
     # Memory file path - direct file access (no MCP dependency)
-    MEMORY_FILE = workspace_root / "Memory" / "nemo_memory.json"
+    MEMORY_FILE = workspace_root / "Memory" / "memory.json"
 
     async def read_memories_direct(self) -> list:
         """Read memories directly from JSON file (no MCP dependency)."""

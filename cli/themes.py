@@ -11,7 +11,7 @@ from rich import box
 import time
 from typing import Dict, Optional
 
-from config import THEMES, DEFAULT_THEME, NEMO_ASCII
+from config import THEMES, DEFAULT_THEME, SOVWREN_ASCII
 
 class ThemeManager:
     def __init__(self):
@@ -36,8 +36,8 @@ class ThemeManager:
         return self.theme_config.get(color_type, "white")
 
     def print_banner(self):
-        """Print the NeMo ASCII banner"""
-        banner_text = Text(NEMO_ASCII)
+        """Print the Sovwren ASCII banner"""
+        banner_text = Text(SOVWREN_ASCII)
         banner_text.stylize(self.get_color("accent"))
         self.console.print(banner_text)
 

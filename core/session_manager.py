@@ -1,4 +1,4 @@
-"""Session Manager for NeMo AI Agent - Resume Chat Feature"""
+"""Session Manager for Sovwren - Resume Chat Feature"""
 import uuid
 from datetime import datetime
 from typing import List, Dict, Optional

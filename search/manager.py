@@ -196,12 +196,12 @@ class SearchManager:
         return results
 
     def format_for_context(self, results: List[SearchResult]) -> str:
-        """Format search results for injection into NeMo's context.
+        """Format search results for injection into Sovwren's context.
 
         This is how the Librarian pattern completes:
         - Results become structured context blocks
-        - NeMo reads these and synthesizes an answer
-        - NeMo cites the specific URLs in its response
+        - Sovwren reads these and synthesizes an answer
+        - Sovwren cites the specific URLs in its response
 
         Returns:
             Formatted string for context injection

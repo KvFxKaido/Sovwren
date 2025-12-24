@@ -1,4 +1,4 @@
-"""Main CLI interface for NeMo AI Agent"""
+"""Main CLI interface for Sovwren"""
 import asyncio
 import uuid
 from typing import Dict, List, Optional
@@ -7,7 +7,7 @@ import sys
 
 from .themes import theme
 from .commands import CommandHandler
-from config import NEMO_SYSTEM_PROMPT
+from config import SOVWREN_SYSTEM_PROMPT
 from llm.ollama_client import ollama_client
 from rag.retriever import rag_retriever
 from scraper.web_scraper import web_scraper
@@ -15,7 +15,7 @@ from core.database import db
 from core.calendar import calendar
 from core.session_manager import session_manager
 
-class NeMoCLI:
+class SovwrenCLI:
     def __init__(self):
         self.session_id = str(uuid.uuid4())
         self.running = True
@@ -28,7 +28,7 @@ class NeMoCLI:
 
     async def initialize(self, resume_session_id: str = None):
         """Initialize all components"""
-        theme.print_status("Initializing NeMo AI Agent...", "info")
+        theme.print_status("Initializing Sovwren...", "info")
 
         try:
             # Initialize components
@@ -68,7 +68,7 @@ class NeMoCLI:
 
             provider_name = "LM Studio" if self.llm_provider == "lmstudio" else "Ollama"
             theme.print_success(f"Found {len(models)} {provider_name} models")
-            theme.print_success("NeMo AI Agent initialized successfully!")
+            theme.print_success("Sovwren initialized successfully!")
 
             return True
 
@@ -139,7 +139,7 @@ class NeMoCLI:
                 response = await self.llm_client.generate(
                     prompt=message,
                     context=context,
-                    system_prompt=NEMO_SYSTEM_PROMPT,
+                    system_prompt=SOVWREN_SYSTEM_PROMPT,
                     stream=False
                 )
 
@@ -212,7 +212,7 @@ class NeMoCLI:
         response = await self.llm_client.generate(
             prompt=message,
             context=context,
-            system_prompt=NEMO_SYSTEM_PROMPT,
+            system_prompt=SOVWREN_SYSTEM_PROMPT,
             stream=False
         )
         
@@ -554,13 +554,13 @@ class NeMoCLI:
             "/history": "Show conversation history",
             "/theme <name>": "Change CLI theme (matrix, cyberpunk, minimal)",
             "/clear": "Clear the screen",
-            "/exit": "Exit NeMo"
+            "/exit": "Exit Sovwren"
         }
 
         theme.print_help(commands)
         theme.print_separator()
         theme.print_info("🤖 Intelligent Agent:")
-        theme.console.print("  NeMo can use tools when needed (reads are safe by default).")
+        theme.console.print("  Sovwren can use tools when needed (reads are safe by default).")
         theme.console.print("  Example: 'read the file workspace/notes.txt'")
         theme.console.print("  Example: 'remember that I prefer Python 3.11'")
         theme.console.print("  Note: any tool-initiated file writes/deletes should require explicit confirmation.")
@@ -649,7 +649,7 @@ class NeMoCLI:
             theme.print_status("Last exchange:", "info")
             last = self.conversation_history[-1]
             theme.console.print(f"[dim]You:[/] {last['user'][:80]}{'...' if len(last['user']) > 80 else ''}")
-            theme.console.print(f"[dim]NeMo:[/] {last['assistant'][:120]}{'...' if len(last['assistant']) > 120 else ''}")
+            theme.console.print(f"[dim]Sovwren:[/] {last['assistant'][:120]}{'...' if len(last['assistant']) > 120 else ''}")
 
     async def name_session(self, name: str):
         """Set a friendly name for the current session"""
@@ -717,4 +717,4 @@ class NeMoCLI:
             theme.print_info("Use /sessions to see available sessions")
 
 # CLI instance
-cli = NeMoCLI()
+cli = SovwrenCLI()

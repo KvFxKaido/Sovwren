@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-NeMo AI Agent - Advanced RAG-powered CLI assistant
+Sovwren CLI - RAG-powered local LLM assistant
 
-A sophisticated AI assistant that combines Ollama LLMs with RAG (Retrieval-Augmented Generation)
+A local AI assistant that combines Ollama/LM Studio with RAG (Retrieval-Augmented Generation)
 capabilities, featuring web scraping, vector search, and intelligent context injection.
 
 Features:
 - RAG pipeline with FAISS vector search and BERT embeddings
-- Dynamic Ollama model switching
+- Dynamic model switching (Ollama/LM Studio)
 - Web scraping and document ingestion
 - Beautiful CLI with customizable themes
 - Persistent conversation memory
@@ -19,7 +19,7 @@ Usage:
 
 Commands:
     /help           - Show available commands
-    /models         - List Ollama models
+    /models         - List available models
     /switch <model> - Switch AI model
     /scrape <url>   - Scrape website
     /search <query> - Search documents
@@ -45,7 +45,7 @@ from config import OLLAMA_BASE_URL, LMSTUDIO_BASE_URL
 def parse_arguments():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description="NeMo AI Agent - Advanced RAG-powered CLI assistant",
+        description="Sovwren CLI - RAG-powered local LLM assistant",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__
     )
@@ -95,7 +95,7 @@ def parse_arguments():
     parser.add_argument(
         "--version",
         action="version",
-        version="NeMo AI Agent 1.0.0"
+        version="Sovwren CLI 1.0.0"
     )
     
     # Session management arguments
@@ -212,8 +212,8 @@ async def setup_health_monitoring():
 
 def show_startup_info():
     """Show startup information"""
-    theme.print_status("NeMo AI Agent v1.0.0", "info")
-    theme.print_status("Advanced RAG-powered CLI assistant", "info")
+    theme.print_status("Sovwren CLI v1.0.0", "info")
+    theme.print_status("RAG-powered local LLM assistant", "info")
     theme.print_separator()
 
 async def main():

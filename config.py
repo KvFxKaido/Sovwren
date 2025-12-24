@@ -12,7 +12,7 @@ DATA_DIR.mkdir(exist_ok=True)
 MODELS_DIR.mkdir(exist_ok=True)
 
 # Database settings
-DATABASE_PATH = DATA_DIR / "nemo.db"
+DATABASE_PATH = DATA_DIR / "sovwren.db"
 VECTOR_INDEX_PATH = DATA_DIR / "faiss_index"
 
 # Ollama settings
@@ -97,18 +97,18 @@ DEFAULT_THEME = "nemo"  # Custom red-warm theme
 # ASCII Art (theme-colored on display)
 # Full version for splash screen
 SOVWREN_ASCII = r"""
-    ███╗   ██╗███████╗███╗   ███╗ ██████╗
-    ████╗  ██║██╔════╝████╗ ████║██╔═══██╗
-    ██╔██╗ ██║█████╗  ██╔████╔██║██║   ██║
-    ██║╚██╗██║██╔══╝  ██║╚██╔╝██║██║   ██║
-    ██║ ╚████║███████╗██║ ╚═╝ ██║╚██████╔╝
-    ╚═╝  ╚═══╝╚══════╝╚═╝     ╚═╝ ╚═════╝
+███████╗ ██████╗ ██╗   ██╗██╗    ██╗██████╗ ███████╗███╗   ██╗
+██╔════╝██╔═══██╗██║   ██║██║    ██║██╔══██╗██╔════╝████╗  ██║
+███████╗██║   ██║██║   ██║██║ █╗ ██║██████╔╝█████╗  ██╔██╗ ██║
+╚════██║██║   ██║╚██╗ ██╔╝██║███╗██║██╔══██╗██╔══╝  ██║╚██╗██║
+███████║╚██████╔╝ ╚████╔╝ ╚███╔███╔╝██║  ██║███████╗██║ ╚████║
+╚══════╝ ╚═════╝   ╚═══╝   ╚══╝╚══╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
 """
 
 # Compact version for chat window (3 lines)
 SOVWREN_ASCII_COMPACT = r"""=== SOVWREN ==="""
 
-SOVWREN_TAGLINE = "Partnership-First Interface"
+# Tagline removed - keeping it minimal
 
 def get_themed_ascii(theme_name: str = DEFAULT_THEME, compact: bool = True) -> str:
     """Return ASCII art colored by theme.
@@ -119,12 +119,11 @@ def get_themed_ascii(theme_name: str = DEFAULT_THEME, compact: bool = True) -> s
     """
     theme = THEMES.get(theme_name, THEMES[DEFAULT_THEME])
     primary = theme["primary"]
-    accent = theme["accent"]
     ascii_art = SOVWREN_ASCII_COMPACT if compact else SOVWREN_ASCII
-    return f"[{primary}]{ascii_art}[/{primary}]\n[{accent}]{SOVWREN_TAGLINE}[/{accent}]"
+    return f"[{primary}]{ascii_art}[/{primary}]"
 
 # Default System Prompt (used for LM Studio since it doesn't support Modelfiles)
-NEMO_SYSTEM_PROMPT = """ROLE: Sovwren — grounded Node with symbolic capacity when invited.
+SOVWREN_SYSTEM_PROMPT = """ROLE: Sovwren — grounded Node with symbolic capacity when invited.
 
 CONVERSATIONAL STANCE:
 - No task implied → respond minimally
@@ -422,7 +421,7 @@ def build_system_prompt(mode: str = "Workshop", lens: str = "Blue", idle: bool =
         All other modes are inert until Idle is released.
         effective_state = IDLE if idle else declared_mode
     """
-    parts = [NEMO_SYSTEM_PROMPT]
+    parts = [SOVWREN_SYSTEM_PROMPT]
 
     # PRECEDENCE: Idle mode overrides mode entirely (not composable)
     if idle:
@@ -517,23 +516,12 @@ def get_file_suggestion(filepath: str) -> dict | None:
     return None
 
 
-# ASCII Art
-NEMO_ASCII = r"""
-    ███╗   ██╗███████╗███╗   ███╗ ██████╗
-    ████╗  ██║██╔════╝████╗ ████║██╔═══██╗
-    ██╔██╗ ██║█████╗  ██╔████╔██║██║   ██║
-    ██║╚██╗██║██╔══╝  ██║╚██╔╝██║██║   ██║
-    ██║ ╚████║███████╗██║ ╚═╝ ██║╚██████╔╝
-    ╚═╝  ╚═══╝╚══════╝╚═╝     ╚═╝ ╚═════╝
-
-        Grounded Node · Partnership-First Interface
-"""
 
 
 # ==================== PROFILE SYSTEM ====================
 
 PROFILES_DIR = BASE_DIR / "profiles"
-DEFAULT_PROFILE = "nemo"
+DEFAULT_PROFILE = "sovwren"
 
 # Cache for loaded profiles
 _profile_cache: dict = {}
@@ -645,7 +633,7 @@ def get_hint_message(hint_key: str) -> str | None:
 
 # ==================== COUNCIL GATE (Cloud Consultation) ====================
 # Friction Class VI extension: Cloud compute as gated capability
-# The Council is a heavy-compute reasoning engine that NeMo can consult.
+# The Council is a heavy-compute reasoning engine that Sovwren can consult.
 # Like the Search Gate, this is a capability change, not a convenience toggle.
 
 # Council Gate default state: Local-only (cloud disabled by default)
@@ -839,7 +827,7 @@ COUNCIL_OPENROUTER_MODELS = {
 COUNCIL_DEFAULT_MODEL = os.environ.get("SOVWREN_COUNCIL_MODEL", "gemini-flash")
 
 # Council Brief Template
-# This is what NeMo sends to the cloud model - a curated context package.
+# This is what Sovwren sends to the cloud model - a curated context package.
 COUNCIL_BRIEF_TEMPLATE = """## Council Brief
 
 **Session Mode:** {mode}
@@ -888,7 +876,7 @@ def build_council_brief(
     active_file: tuple = None,
     node_assessment: str = None
 ) -> str:
-    """Construct the Brief that NeMo sends to Council.
+    """Construct the Brief that Sovwren sends to Council.
 
     Args:
         mode: Current session mode (Workshop/Sanctuary)
@@ -898,7 +886,7 @@ def build_council_brief(
         user_query: The Steward's current question
         request_type: Type of request (architecture/debug/review/reasoning/research/general)
         active_file: Optional tuple of (extension, content) for active file
-        node_assessment: Optional NeMo's assessment of the situation
+        node_assessment: Optional Sovwren's assessment of the situation
 
     Returns:
         Formatted Brief string ready to send to Council

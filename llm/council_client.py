@@ -22,10 +22,10 @@ from config import (
 class CouncilClient:
     """Client for cloud model consultation via Ollama Cloud or OpenRouter.
 
-    The Council is a heavy-compute reasoning engine that NeMo can consult
+    The Council is a heavy-compute reasoning engine that Sovwren can consult
     for architectural decisions, complex debugging, and multi-step reasoning.
 
-    This follows the Liaison model: NeMo prepares a Brief, Council returns Counsel.
+    This follows the Liaison model: Sovwren prepares a Brief, Council returns Counsel.
 
     Supports two backends:
     - "ollama": Uses local Ollama server which routes to Ollama Cloud transparently
@@ -307,7 +307,7 @@ class CouncilClient:
     ) -> Optional[str]:
         """Convenience method: build Brief and consult in one call.
 
-        This is the primary interface for NeMo to consult Council.
+        This is the primary interface for Sovwren to consult Council.
         """
         # Redact sensitive content by default (best-effort safety belt).
         brief, _meta = prepare_council_brief(

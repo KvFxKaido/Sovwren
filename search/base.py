@@ -18,7 +18,7 @@ class SearchResult:
     """A single search result with full provenance.
 
     This is the atomic unit returned by all search adapters.
-    NeMo injects these into context as if they were local files,
+    Sovwren injects these into context as if they were local files,
     then synthesizes answers citing specific URLs.
     """
     url: str
@@ -34,7 +34,7 @@ class SearchResult:
     content_hash: Optional[str] = None  # For reproducibility checks
 
     def to_context_block(self) -> str:
-        """Format this result for injection into NeMo's context.
+        """Format this result for injection into Sovwren's context.
 
         Returns a structured block that makes the source explicit
         and prevents source laundering.
@@ -73,7 +73,7 @@ class SearchAdapter(ABC):
     The adapter is a Librarian, not an Oracle:
     - It finds sources and returns metadata
     - It does NOT synthesize answers
-    - NeMo does the synthesis, citing the sources
+    - Sovwren does the synthesis, citing the sources
     """
 
     @property

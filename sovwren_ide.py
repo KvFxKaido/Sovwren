@@ -1134,6 +1134,77 @@ class ChatInput(TextArea):
         except Exception:
             return False
 
+    def _extract_pasted_file_paths(self, pasted: str) -> list[Path]:
+        """Extract file paths from a paste payload (Windows drag-drop typically pastes quoted paths)."""
+        import shlex
+
+        raw = (pasted or "").strip()
+        if not raw:
+            return []
+
+        # Normalize newlines and split into tokens with Windows-friendly quoting.
+        raw = raw.replace("\r\n", "\n").replace("\r", "\n")
+        tokens: list[str] = []
+        for line in raw.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                tokens.extend(shlex.split(line, posix=False))
+            except Exception:
+                tokens.extend(line.split())
+
+        if not tokens:
+            return []
+
+        paths: list[Path] = []
+        for token in tokens:
+            t = token.strip().strip('"').strip("'")
+            if not t:
+                continue
+            p = Path(t)
+            try:
+                if p.is_file():
+                    paths.append(p.resolve())
+            except Exception:
+                continue
+
+        # Only treat as "file drop" if every token was a valid file.
+        if len(paths) != len(tokens):
+            return []
+        return paths
+
+    def _on_paste(self, event: events.Paste) -> None:
+        """Handle paste, treating pure file-path pastes as @workspace-relative references."""
+        pasted = getattr(event, "text", "") or ""
+        files = self._extract_pasted_file_paths(pasted)
+        if not files:
+            return super()._on_paste(event)
+
+        refs: list[str] = []
+        rejected: list[str] = []
+        for file_path in files:
+            try:
+                rel = file_path.relative_to(workspace_root).as_posix()
+                refs.append(f"@{rel}")
+            except Exception:
+                rejected.append(str(file_path))
+
+        if not refs:
+            self.app.notify("Dropped file(s) are outside workspace; not attached", severity="warning")
+            return
+
+        # Insert references at cursor. Keep it explicit; no silent copying/importing.
+        event.stop()
+        event.prevent_default()
+        self.insert(" ".join(refs) + " ")
+        self._set_mention_visibility(False)
+
+        if rejected:
+            self.app.notify("Some dropped files were outside workspace; ignored", severity="warning")
+        else:
+            self.app.notify(f"Attached {len(refs)} file(s)", severity="information")
+
     def _on_key(self, event: events.Key) -> None:
         """Handle Enter for submit."""
         # If mention suggestions are visible, they own a few keys.

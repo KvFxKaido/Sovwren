@@ -4857,7 +4857,7 @@ Output ONLY valid JSON."""
             child.remove()
         # Re-show ASCII art after clear
         stream.add_message(get_themed_ascii(DEFAULT_THEME), "system")
-        stream.add_message("[dim]Chat cleared. Ready for partnership.[/dim]", "system")
+        stream.add_message("[dim]Chat cleared.[/dim]", "system")
         # Clear context tracking
         self.conversation_history = []
         self.rag_chunks_loaded = []

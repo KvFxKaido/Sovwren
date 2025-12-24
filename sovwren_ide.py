@@ -1933,6 +1933,8 @@ class SovwrenIDE(App):
     PREF_LAST_PROFILE_KEY = "last_profile"  # Preference key for profile persistence
     PREF_LAST_MODEL_KEY = "last_model"  # Preference key for model persistence
     PREF_INITIATIVE_DEFAULT_KEY = "initiative_default"  # Preference key for initiative default (Low/Normal/High)
+    PREF_LAST_MODE_KEY = "last_mode"  # Preference key for mode persistence (Workshop/Sanctuary)
+    PREF_LAST_LENS_KEY = "last_lens"  # Preference key for lens persistence (Blue/Red/Purple)
 
     # Known context windows for common models (in tokens)
     # Add models as you encounter them - this is a practical lookup, not exhaustive
@@ -2155,6 +2157,26 @@ class SovwrenIDE(App):
                     self._initiative_current = saved_initiative
             except Exception:
                 pass
+
+            # Load last mode (Workshop/Sanctuary)
+            try:
+                saved_mode = await self.db.get_preference(self.PREF_LAST_MODE_KEY, default=None)
+                if saved_mode in ("Workshop", "Sanctuary"):
+                    self.session_mode = saved_mode
+            except Exception:
+                pass
+
+            # Load last lens (Blue/Red/Purple)
+            try:
+                saved_lens = await self.db.get_preference(self.PREF_LAST_LENS_KEY, default=None)
+                if saved_lens in ("Blue", "Red", "Purple"):
+                    self.session_lens = saved_lens
+            except Exception:
+                pass
+
+        # Apply restored mode to UI (class + buttons)
+        self._apply_mode_to_ui(self.session_mode)
+        self._apply_lens_to_ui(self.session_lens)
 
         # Initialize initiative UI (Truth Strip + buttons)
         self._apply_initiative_mode_defaults()
@@ -2408,6 +2430,56 @@ class SovwrenIDE(App):
                 btn.label = f"Init: {glyph}"
             except Exception:
                 pass
+
+    def _apply_mode_to_ui(self, mode: str) -> None:
+        """Apply mode state to UI (class + buttons + Truth Strip)."""
+        # Update CSS class for border color
+        if mode == "Workshop":
+            self.remove_class("mode-sanctuary")
+            self.add_class("mode-workshop")
+        else:
+            self.remove_class("mode-workshop")
+            self.add_class("mode-sanctuary")
+
+        # Update button active states
+        for btn_id in ("mode-workshop", "mode-sanctuary", "dock-mode-workshop", "dock-mode-sanctuary"):
+            try:
+                btn = self.query_one(f"#{btn_id}", Button)
+                if (mode == "Workshop" and "workshop" in btn_id) or (mode == "Sanctuary" and "sanctuary" in btn_id):
+                    btn.add_class("active")
+                else:
+                    btn.remove_class("active")
+            except Exception:
+                pass
+
+        # Update Truth Strip
+        try:
+            self.query_one(StatusBar).update_mode(mode)
+        except Exception:
+            pass
+
+    def _apply_lens_to_ui(self, lens: str) -> None:
+        """Apply lens state to UI (buttons + Truth Strip)."""
+        lens_map = {"Blue": "lens-blue", "Red": "lens-red", "Purple": "lens-purple"}
+        target_id = lens_map.get(lens, "lens-blue")
+
+        # Update button active states
+        for btn_id in ("lens-blue", "lens-red", "lens-purple", "dock-lens-blue", "dock-lens-red", "dock-lens-purple"):
+            try:
+                btn = self.query_one(f"#{btn_id}", Button)
+                base_id = btn_id.replace("dock-", "")
+                if base_id == target_id:
+                    btn.add_class("active")
+                else:
+                    btn.remove_class("active")
+            except Exception:
+                pass
+
+        # Update Truth Strip
+        try:
+            self.query_one(StatusBar).update_lens(lens)
+        except Exception:
+            pass
 
     def _apply_initiative_mode_defaults(self) -> None:
         """Apply mode-driven initiative defaults unless user overrode this session."""
@@ -4313,6 +4385,9 @@ class SovwrenIDE(App):
                 pass
             # Update Truth Strip
             self.query_one(StatusBar).update_lens(self.session_lens)
+            # Persist lens preference
+            if self.db:
+                asyncio.create_task(self.db.set_preference(self.PREF_LAST_LENS_KEY, self.session_lens))
 
         # Mode buttons
         elif button_id in ("mode-workshop", "mode-sanctuary", "dock-mode-workshop", "dock-mode-sanctuary"):
@@ -4352,6 +4427,9 @@ class SovwrenIDE(App):
             # Update Truth Strip
             self.query_one(StatusBar).update_mode(self.session_mode)
             self._apply_initiative_mode_defaults()
+            # Persist mode preference
+            if self.db:
+                asyncio.create_task(self.db.set_preference(self.PREF_LAST_MODE_KEY, self.session_mode))
 
         # Protocol buttons
         elif button_id in ("btn-bookmark", "dock-bookmark-btn"):

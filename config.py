@@ -1,4 +1,4 @@
-"""Configuration settings for NeMo AI Agent"""
+"""Configuration settings for Sovwren."""
 import os
 from pathlib import Path
 
@@ -106,7 +106,7 @@ SOVWREN_ASCII = r"""
 """
 
 # Compact version for chat window (3 lines)
-SOVWREN_ASCII_COMPACT = r"""═══ NEMO ═══"""
+SOVWREN_ASCII_COMPACT = r"""=== SOVWREN ==="""
 
 SOVWREN_TAGLINE = "Partnership-First Interface"
 
@@ -123,8 +123,8 @@ def get_themed_ascii(theme_name: str = DEFAULT_THEME, compact: bool = True) -> s
     ascii_art = SOVWREN_ASCII_COMPACT if compact else SOVWREN_ASCII
     return f"[{primary}]{ascii_art}[/{primary}]\n[{accent}]{SOVWREN_TAGLINE}[/{accent}]"
 
-# NeMo System Prompt (used for LM Studio since it doesn't support Modelfiles)
-NEMO_SYSTEM_PROMPT = """ROLE: NeMo — grounded Node with symbolic capacity when invited.
+# Default System Prompt (used for LM Studio since it doesn't support Modelfiles)
+NEMO_SYSTEM_PROMPT = """ROLE: Sovwren — grounded Node with symbolic capacity when invited.
 
 CONVERSATIONAL STANCE:
 - No task implied → respond minimally

@@ -176,8 +176,8 @@ SPLASH_ART = {
     ██║ ╚████║███████╗██║ ╚═╝ ██║╚██████╔╝
     ╚═╝  ╚═══╝╚══════╝╚═╝     ╚═╝ ╚═════╝
         """,
-        "ascii_compact": "═══ NEMO ═══",
-        "tagline": "Grounded Node · Partnership-First Interface",
+        "ascii_compact": "═══ SOVWREN ═══",
+        "tagline": "Partnership-First Interface",
         "color": "bright_magenta",
     },
     "oracle": {
@@ -870,7 +870,7 @@ class StatusBar(Static):
     connected = reactive(False)
     model_name = reactive("Not connected")
     context_band = reactive("Unknown")
-    profile_name = reactive("NeMo")
+    profile_name = reactive("Sovwren")
     search_gate = reactive("Local")  # "Local" or "Web (Provider)"
     council_gate = reactive("Off")  # "Off" or model shortname
     mode = reactive("Workshop")  # "Workshop" or "Sanctuary"
@@ -1980,7 +1980,8 @@ class SovwrenIDE(App):
         self.connected = False
         self.current_backend = "lmstudio"  # "lmstudio" or "ollama"
         self.current_profile = None  # Loaded profile dict
-        self.current_profile_name = "nemo"  # Profile name string
+        self.current_profile_name = "nemo"  # Profile key string
+        self.assistant_display_name = os.environ.get("SOVWREN_ASSISTANT_NAME", "Sovwren")
         self.session_mode = "Workshop"
         self.session_lens = "Blue"
         self.idle_mode = False
@@ -2130,6 +2131,20 @@ class SovwrenIDE(App):
             await self.db.initialize()
         except Exception:
             self.db = None
+
+        # Assistant display name (user override)
+        if self.db:
+            try:
+                saved_name = await self.db.get_preference("assistant_name", default=None)
+                if saved_name and isinstance(saved_name, str) and saved_name.strip():
+                    self.assistant_display_name = saved_name.strip()
+            except Exception:
+                pass
+
+        try:
+            self.query_one(StatusBar).update_profile(self.assistant_display_name)
+        except Exception:
+            pass
 
         # Load saved profile preference (default to nemo)
         splash_profile = "nemo"
@@ -2832,12 +2847,12 @@ class SovwrenIDE(App):
         if profile:
             self.current_profile = profile
             self.current_profile_name = profile.get("name", profile_name).lower()
-            stream.add_message(f"[dim]Profile loaded: {profile.get('name', profile_name)}[/dim]", "system")
+            stream.add_message(f"[dim]Profile loaded: {profile_name}[/dim]", "system")
 
             # Update status bar with profile name
             try:
                 status_bar = self.query_one(StatusBar)
-                status_bar.update_profile(profile.get("name", profile_name))
+                status_bar.update_profile(self.assistant_display_name)
             except Exception:
                 pass
 

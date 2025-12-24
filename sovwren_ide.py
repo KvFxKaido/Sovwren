@@ -772,10 +772,24 @@ class BottomDock(Vertical):
                     yield Static("[dim]No file loaded[/dim]", id="dock-editor-status")
                 yield TextArea("", id="dock-editor-textarea", show_line_numbers=True)
 
+            with TabPane("📊 Monitor", id="dock-monitor"):
+                yield Label("[b]Model[/b]", classes="panel-header")
+                yield Static("", id="monitor-model")
+                yield Static("", id="monitor-request")
+                yield Static("", id="monitor-context")
+
+                yield Label("[b]System[/b]", classes="panel-header panel-header-spaced")
+                yield Static("", id="monitor-system")
+                yield Static("", id="monitor-disk")
+
+                yield Label("[b]Consent[/b]", classes="panel-header panel-header-spaced")
+                yield Static("", id="monitor-consent")
+                yield Static("", id="monitor-refs")
+
             with TabPane("📋 Context", id="dock-context"):
                 yield Static("[dim]No context loaded[/dim]", id="dock-context-status")
                 yield Static("", id="dock-memory-status")
-            
+             
             with TabPane("⚙️ Controls", id="dock-controls"):
                 # Mode buttons (essential)
                 yield Label("[b]Mode[/b]", classes="panel-header")
@@ -2007,6 +2021,13 @@ class SovwrenIDE(App):
         self._initiative_overridden = False   # True if changed this session
         self._initiative_forced_low = False   # Idle forces effective Low, restores automatically
 
+        # Monitor: local model request health (minimal, truthful)
+        self._llm_inflight = False
+        self._last_llm_latency_ms: float | None = None
+        self._last_llm_tokens_est: int | None = None
+        self._last_llm_tps_est: float | None = None
+        self._last_llm_error: str | None = None
+
     def _update_last_context_displays(self, text: str) -> None:
         """Update both sidebar and Tall-layout dock context panels."""
         try:
@@ -2069,6 +2090,7 @@ class SovwrenIDE(App):
 
         # Temporal empathy: start idle check timer (checks every 5 seconds)
         self.set_interval(5.0, self._check_idle_state)
+        self.set_interval(1.0, self._update_monitor_panel)
 
         # Workspace file index (for @mentions in chat)
         self._workspace_file_index: list[str] = []
@@ -2119,6 +2141,111 @@ class SovwrenIDE(App):
             self._workspace_file_index = sorted(paths)
         except Exception:
             self._workspace_file_index = []
+
+    def _format_bytes(self, n: int | None) -> str:
+        if n is None:
+            return "?"
+        units = ["B", "KB", "MB", "GB", "TB"]
+        size = float(max(0, n))
+        for unit in units:
+            if size < 1024 or unit == units[-1]:
+                if unit in ("B", "KB"):
+                    return f"{int(size)} {unit}"
+                return f"{size:.1f} {unit}"
+            size /= 1024
+        return f"{size:.1f} TB"
+
+    def _update_monitor_panel(self) -> None:
+        """Update the dock monitor panel (best-effort; never throws)."""
+        try:
+            backend = "LM Studio" if self.current_backend == "lmstudio" else "Ollama"
+            model = ""
+            try:
+                model = getattr(self.llm_client, "current_model", "") if self.llm_client else ""
+            except Exception:
+                model = ""
+
+            connected = "Connected" if self.connected else "Disconnected"
+            inflight = "in-flight" if self._llm_inflight else "idle"
+            latency = f"{self._last_llm_latency_ms}ms" if self._last_llm_latency_ms is not None else "—"
+            tps = f"~{self._last_llm_tps_est}/s" if self._last_llm_tps_est is not None else "—"
+            err = f" | err: {self._last_llm_error}" if self._last_llm_error else ""
+
+            try:
+                self.query_one("#monitor-model", Static).update(f"{backend} | {connected} | {model or 'No model'}")
+            except Exception:
+                pass
+            try:
+                self.query_one("#monitor-request", Static).update(f"Request: {inflight} | last: {latency} | t/s: {tps}{err}")
+            except Exception:
+                pass
+
+            try:
+                band = getattr(self, "_last_context_band", "Unknown")
+                self.query_one("#monitor-context", Static).update(f"Context: {band}")
+            except Exception:
+                pass
+
+            # System stats via psutil (optional but expected)
+            cpu_text = "CPU: ?"
+            ram_text = "RAM: ?"
+            try:
+                import psutil  # type: ignore
+
+                cpu = psutil.cpu_percent(interval=None)
+                mem = psutil.virtual_memory()
+                cpu_text = f"CPU: {cpu:.0f}%"
+                ram_text = f"RAM: {self._format_bytes(mem.used)} / {self._format_bytes(mem.total)}"
+            except Exception:
+                pass
+
+            try:
+                self.query_one("#monitor-system", Static).update(f"{cpu_text} | {ram_text}")
+            except Exception:
+                pass
+
+            disk_free = None
+            disk_total = None
+            try:
+                usage = shutil.disk_usage(workspace_root)
+                disk_free = usage.free
+                disk_total = usage.total
+            except Exception:
+                pass
+
+            try:
+                if disk_free is not None and disk_total is not None:
+                    self.query_one("#monitor-disk", Static).update(
+                        f"Disk (workspace): {self._format_bytes(disk_free)} free / {self._format_bytes(disk_total)}"
+                    )
+                else:
+                    self.query_one("#monitor-disk", Static).update("Disk (workspace): ?")
+            except Exception:
+                pass
+
+            # Consent lights / references
+            try:
+                search = "On" if getattr(self, "search_gate_enabled", False) else "Off"
+                council = "On" if getattr(self, "council_gate_enabled", False) else "Off"
+                self.query_one("#monitor-consent", Static).update(f"Search Gate: {search} | Council Gate: {council}")
+            except Exception:
+                pass
+
+            try:
+                chat_input = self.query_one("#chat-input", ChatInput)
+                refs = [t for t in (chat_input.text or "").split() if t.startswith("@")]
+                imports_dir = workspace_root / "imports"
+                imported_count = 0
+                try:
+                    if imports_dir.exists():
+                        imported_count = sum(1 for p in imports_dir.rglob("*") if p.is_file())
+                except Exception:
+                    imported_count = 0
+                self.query_one("#monitor-refs", Static).update(f"Refs in input: {len(refs)} | Imports: {imported_count}")
+            except Exception:
+                pass
+        except Exception:
+            return
 
     def _add_to_workspace_file_index(self, rel_posix: str) -> None:
         """Insert a new file into the mention index (keeps list sorted)."""
@@ -3805,7 +3932,13 @@ class FileImportModal(Screen):
         # Show thinking indicator
         stream.add_message("[dim]Node is thinking...[/dim]", "system")
 
+        response = None
+        start_time = time.perf_counter()
+
         try:
+            self._llm_inflight = True
+            self._last_llm_error = None
+
             # Build dynamic system prompt based on current state
             from config import build_system_prompt, build_system_prompt_from_profile
 
@@ -4076,7 +4209,23 @@ class FileImportModal(Screen):
                 self.context_high_acknowledged = True
 
         except Exception as e:
+            self._last_llm_error = str(e)
             stream.add_message(f"[red]Error: {e}[/red]", "error")
+        finally:
+            try:
+                elapsed = max(0.0, time.perf_counter() - start_time)
+                self._last_llm_latency_ms = round(elapsed * 1000.0, 1)
+                if response:
+                    tokens_est = int(len(response) * self.AVG_TOKENS_PER_CHAR)
+                    self._last_llm_tokens_est = tokens_est
+                    self._last_llm_tps_est = round(tokens_est / elapsed, 1) if elapsed > 0 else None
+                else:
+                    self._last_llm_tokens_est = None
+                    self._last_llm_tps_est = None
+            except Exception:
+                pass
+            self._llm_inflight = False
+            self._update_monitor_panel()
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""

@@ -1204,11 +1204,11 @@ class SovwrenIDE(App):
         scrollbar-corner-color: #000000;
     }
 
-    /* Layout Containers - Three Column: Tree | Editor | Chat */
-    #main-layout { height: 1fr; }
-    #sidebar-left { width: 18%; min-width: 20; height: 100%; border-right: solid #1a1a1a; background: #000000; }
-    #editor-panel { width: 40%; height: 100%; border-right: solid #1a1a1a; background: #000000; }
-    #chat-panel { width: 1fr; height: 100%; background: #000000; }
+    /* PORTRAIT-FIRST LAYOUT: Spine is canonical, sidebars are summoned */
+    #main-layout { height: 1fr; align: center top; }
+    #sidebar-left { display: none; width: 18%; min-width: 20; height: 100%; border-right: solid #1a1a1a; background: #000000; }
+    #editor-panel { display: none; width: 40%; height: 100%; border-right: solid #1a1a1a; background: #000000; }
+    #chat-panel { width: 100%; max-width: 80; height: 100%; background: #000000; }
 
     /* Spine container - primary cognitive workspace */
     #spine { height: 1fr; width: 100%; }
@@ -1247,34 +1247,13 @@ class SovwrenIDE(App):
     #bottom-dock Tab.-active { background: #1a1a1a; color: #a0a0a0; }
     #bottom-dock TabPane { padding: 1; }
 
-    /* Layout Mode: Wide (default - three column) */
-    .layout-wide #sidebar-left { display: block; width: 18%; }
-    .layout-wide #editor-panel { display: block; width: 40%; }
-    .layout-wide #chat-panel { width: 1fr; }
-    .layout-wide #bottom-dock { display: none; }
-    .layout-wide ProtocolDeck { display: block; }
+    /* Landscape: same spine, more air around it
+       Rule: "Landscape stretches space, not functionality." */
+    .landscape #main-layout { padding: 0 5; }
+    .portrait #main-layout { padding: 0; }
 
-    /* Layout Mode: Tall (vertical monitor - one spine, bottom dock) */
-    .layout-tall #sidebar-left { display: none; }
-    .layout-tall #editor-panel { display: none; }
-    .layout-tall #chat-panel { width: 100%; }
-    .layout-tall #bottom-dock { display: block; }
-    .layout-tall ProtocolDeck { display: none; }
-
-    /* Layout Mode: Compact (small window - same as tall but tighter) */
-    .layout-compact #sidebar-left { display: none; }
-    .layout-compact #editor-panel { display: none; }
-    .layout-compact #chat-panel { width: 100%; }
-    .layout-compact #bottom-dock { display: block; max-height: 25%; }
-    .layout-compact ProtocolDeck { display: none; }
-
-    /* User toggles (override layout defaults) */
-    .layout-wide.sidebar-hidden #sidebar-left { display: none; }
-    .layout-tall.dock-hidden #bottom-dock { display: none; }
-    .layout-compact.dock-hidden #bottom-dock { display: none; }
-
-    /* Layout indicator in Truth Strip */
-    .layout-forced #layout-indicator { color: #b0954a; }
+    /* BottomDock - toggle-based visibility (Ctrl+B), not layout-based */
+    .dock-visible #bottom-dock { display: block; }
 
 
     /* Right Panel Layout - ProtocolDeck with collapsible drawer */
@@ -1552,7 +1531,7 @@ class SovwrenIDE(App):
         ("f3", "consent_check", "Consent"),
         ("f1", "show_help", "Help"),
         # Hidden bindings (work but don't clutter footer)
-        Binding("ctrl+b", "toggle_sidebar", "Toggle Panels", show=False),
+        Binding("ctrl+b", "toggle_dock", "Toggle Dock", show=False),
         Binding("ctrl+r", "sessions", "Sessions", show=False),
         Binding("ctrl+w", "close_tab", "Close Tab", show=False),
         Binding("f2", "models", "Models", show=False),
@@ -1563,8 +1542,7 @@ class SovwrenIDE(App):
         Binding("ctrl+o", "open_external", "Open in Editor", show=False),
         Binding("ctrl+j", "insert_newline", "Newline", show=False),
         Binding("ctrl+k", "toggle_social_carryover", "Social Carryover", show=False),
-        # Layout and spine switching (Tall Layout Spec)
-        Binding("f8", "toggle_layout_override", "Toggle Layout", show=False),
+        # Spine switching (works in both portrait and landscape)
         Binding("alt+1", "spine_chat", "Chat Spine", show=False),
         Binding("alt+2", "spine_editor", "Editor Spine", show=False),
         Binding("alt+3", "spine_log", "Log Spine", show=False),
@@ -1746,8 +1724,8 @@ class SovwrenIDE(App):
         # Set initial mode for border color
         self.add_class("mode-workshop")
 
-        # Set initial layout (Wide by default, on_resize will auto-detect)
-        self.add_class("layout-wide")
+        # Set initial layout (Portrait-first: on_resize will detect landscape)
+        self.add_class("portrait")
 
         # Set initial spine mode (Chat visible, Editor hidden)
         self.add_class("spine-chat")
@@ -1786,72 +1764,33 @@ class SovwrenIDE(App):
     # --- LAYOUT SYSTEM (Tall Layout Spec) ---
 
     def on_resize(self, event) -> None:
-        """Auto-detect layout based on aspect ratio."""
-        if self._layout_override:
-            return  # Respect forced layout
-
+        """Apply portrait/landscape class based on aspect ratio.
+        
+        Portrait-First: Both orientations have the same spine behavior.
+        Landscape just adds margins around the same centered spine.
+        """
         w, h = self.size.width, self.size.height
-        if h > w:
-            self.set_layout("tall")
-        elif w > h * 1.3:
-            self.set_layout("wide")
+        if w > h:
+            # Landscape: more air around the spine
+            self.remove_class("portrait")
+            self.add_class("landscape")
         else:
-            self.set_layout("compact")
+            # Portrait: spine fills width
+            self.remove_class("landscape")
+            self.add_class("portrait")
 
-    def set_layout(self, layout: str) -> None:
-        """Switch layout mode. Updates CSS classes and shows/hides widgets."""
-        if layout == self._current_layout:
-            return
 
-        old_layout = self._current_layout
-        self._current_layout = layout
+    # set_layout() removed: Portrait-first paradigm doesn't use layout modes.
+    # Landscape/portrait is purely a CSS margin adjustment handled in on_resize().
 
-        # Remove old layout class, add new one
-        self.remove_class(f"layout-{old_layout}")
-        self.add_class(f"layout-{layout}")
-
-        # Show layout indicator if forced
-        if self._layout_override:
-            self.add_class("layout-forced")
+    def action_toggle_dock(self) -> None:
+        """Ctrl+B: Toggle the bottom dock visibility."""
+        if self.has_class("dock-visible"):
+            self.remove_class("dock-visible")
+            self.notify("📦 Dock hidden (Ctrl+B to show)", severity="information")
         else:
-            self.remove_class("layout-forced")
-
-        # Notify in chat (brief, not disruptive)
-        try:
-            stream = self.query_one(NeuralStream)
-            if layout == "tall":
-                stream.add_message("[dim]Layout: Tall (vertical) • Alt+1/2/3 (or F9–F11) to switch spine • Ctrl+B to hide dock[/dim]", "hint")
-            elif layout == "wide":
-                stream.add_message("[dim]Layout: Wide (three-column)[/dim]", "hint")
-            else:
-                stream.add_message("[dim]Layout: Compact[/dim]", "hint")
-        except Exception:
-            pass
-
-    def action_toggle_layout_override(self) -> None:
-        """F8: Toggle layout override (force Wide on Tall screen, etc.)."""
-        if self._layout_override:
-            # Clear override, return to auto-detect
-            self._layout_override = None
-            self.remove_class("layout-forced")
-            # Trigger re-detection
-            w, h = self.size.width, self.size.height
-            if h > w:
-                self.set_layout("tall")
-            elif w > h * 1.3:
-                self.set_layout("wide")
-            else:
-                self.set_layout("compact")
-            self.notify("Layout: Auto-detect restored", severity="information")
-        else:
-            # Force opposite of current
-            if self._current_layout == "tall":
-                self._layout_override = "wide"
-                self.set_layout("wide")
-            else:
-                self._layout_override = "tall"
-                self.set_layout("tall")
-            self.notify(f"Layout: Forced {self._layout_override} (F8 to restore auto)", severity="information")
+            self.add_class("dock-visible")
+            self.notify("📦 Dock visible (Ctrl+B to hide)", severity="information")
 
     def switch_spine(self, spine: str) -> None:
         """Switch spine content in Tall layout between chat and editor.
@@ -1880,8 +1819,6 @@ class SovwrenIDE(App):
 
     def action_spine_chat(self) -> None:
         """Alt+1 (or F9): Switch to Chat spine."""
-        if self._current_layout == "wide":
-            return  # Not needed in Wide layout
 
         # Check if spine editor has unsaved changes
         if self._spine_editor_file:
@@ -1898,9 +1835,7 @@ class SovwrenIDE(App):
         self.notify("🗨️ Chat", severity="information")
 
     def action_spine_editor(self) -> None:
-        """Alt+2 (or F10): Switch to Editor spine (opens last file if any, else prompts)."""
-        if self._current_layout == "wide":
-            return
+        """Alt+2 (or F10): Switch to Editor spine."""
 
         if self._spine_editor_file:
             # Already have a file open, just switch to editor
@@ -2028,19 +1963,6 @@ class SovwrenIDE(App):
             context_widget.update(f"[green]📄 {rel_path}[/green]")
         except Exception:
             pass
-
-    def on_button_pressed(self, event) -> None:
-        """Handle button presses throughout the app."""
-        button_id = event.button.id
-
-        # Spine editor buttons
-        if button_id == "btn-spine-save":
-            asyncio.create_task(self._save_spine_editor())
-        elif button_id == "btn-spine-close":
-            self._close_spine_editor()
-        # Bookmark buttons (sidebar + dock)
-        elif button_id in ("btn-bookmark", "dock-bookmark-btn"):
-            asyncio.create_task(self.initiate_bookmark_weave())
 
     async def _save_spine_editor(self) -> None:
         """Save the current spine editor file."""
@@ -3541,6 +3463,14 @@ class SovwrenIDE(App):
         button_id = event.button.id
         stream = self.query_one(NeuralStream)
 
+        # Spine editor buttons (Tall layout)
+        if button_id == "btn-spine-save":
+            await self._save_spine_editor()
+            return
+        if button_id == "btn-spine-close":
+            self._close_spine_editor()
+            return
+
         # Lens buttons
         if button_id in (
             "lens-blue",
@@ -3631,7 +3561,7 @@ class SovwrenIDE(App):
             self.query_one(StatusBar).update_mode(self.session_mode)
 
         # Protocol buttons
-        elif button_id == "btn-bookmark":
+        elif button_id in ("btn-bookmark", "dock-bookmark-btn"):
             await self.initiate_bookmark_weave()
         elif button_id == "btn-sessions":
             self.action_sessions()
@@ -3855,8 +3785,8 @@ Output ONLY valid JSON."""
             timestamp = datetime.now().strftime("%Y-%m-%d")
             filename = f"{timestamp}.md"
             
-            # Ensure directory exists (save to workspace/Bookmarks/)
-            save_dir = project_root / "workspace" / "Bookmarks"
+            # Ensure directory exists (save to workspace/bookmarks/)
+            save_dir = workspace_root / "bookmarks"
             save_dir.mkdir(parents=True, exist_ok=True)
 
             file_path = save_dir / filename

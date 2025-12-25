@@ -842,6 +842,9 @@ class ProtocolDeck(Vertical):
             with Horizontal(classes="toggle-row"):
                 yield Label("🕐 Time", classes="toggle-label")
                 yield Switch(value=True, id="toggle-timestamps")
+            with Horizontal(classes="toggle-row"):
+                yield Label("📄 Auto", classes="toggle-label")
+                yield Switch(value=False, id="toggle-auto-load-refs")
 
 
 class NeuralStream(ScrollableContainer):
@@ -934,6 +937,9 @@ class BottomDock(Vertical):
                 with Horizontal(classes="toggle-row"):
                     yield Label("🕐 Timestamps", classes="toggle-label")
                     yield Switch(value=True, id="dock-toggle-timestamps")
+                with Horizontal(classes="toggle-row"):
+                    yield Label("📄 Auto-load @refs", classes="toggle-label")
+                    yield Switch(value=False, id="dock-toggle-auto-load-refs")
 
     def update_context_display(self, context_text: str):
         """Update the context status in the dock."""
@@ -2163,6 +2169,23 @@ class SovwrenIDE(App):
     PREF_LAST_MODE_KEY = "last_mode"  # Preference key for mode persistence (Workshop/Sanctuary)
     PREF_LAST_LENS_KEY = "last_lens"  # Preference key for lens persistence (Blue/Red/Purple)
     PREF_SHOW_TIMESTAMPS_KEY = "show_timestamps"  # Preference key for timestamp visibility (default: True)
+    PREF_AUTO_LOAD_REFS_KEY = "auto_load_refs"  # Preference key for auto-loading @refs (default: False)
+
+    # Verb patterns that authorize @ref file loading (Monday's rule: "Verbs authorize access")
+    REF_LOAD_VERBS = [
+        "look at", "looking at",
+        "read", "reading",
+        "review", "reviewing",
+        "analyze", "analyzing", "analyse", "analysing",
+        "check", "checking",
+        "examine", "examining",
+        "inspect", "inspecting",
+        "see", "seeing",
+        "view", "viewing",
+        "use", "using",
+        "open", "opening",
+        "show me", "showing",
+    ]
 
     # Known context windows for common models (in tokens)
     # Add models as you encounter them - this is a practical lookup, not exhaustive
@@ -2208,6 +2231,11 @@ class SovwrenIDE(App):
         self.rag_debug_enabled = False  # RAG Debug Mode toggle
         self.show_timestamps = True     # Message timestamps (default ON per Monday's spec)
         self.social_carryover = True    # Social Carryover: warm (True) or neutral (False)
+        self.auto_load_refs = False     # Auto-load @refs without consent prompt (default OFF)
+
+        # Pending @ref load consent flow
+        self._pending_ref_load: dict | None = None  # {"refs": [...], "message": "..."}
+        self._ref_context_injection: str | None = None  # File contents to inject as context
 
         # Session management (initialized properly in _start_new_session/_resume_session)
         self.db = None
@@ -2412,6 +2440,13 @@ class SovwrenIDE(App):
             except Exception:
                 pass
 
+            # Load auto-load refs preference (default OFF)
+            try:
+                saved_auto = await self.db.get_preference(self.PREF_AUTO_LOAD_REFS_KEY, default="false")
+                self.auto_load_refs = saved_auto.lower() == "true"
+            except Exception:
+                pass
+
         # Apply restored mode to UI (class + buttons)
         self._apply_mode_to_ui(self.session_mode)
         self._apply_lens_to_ui(self.session_lens)
@@ -2423,6 +2458,16 @@ class SovwrenIDE(App):
             pass
         try:
             self.query_one("#dock-toggle-timestamps", Switch).value = self.show_timestamps
+        except Exception:
+            pass
+
+        # Apply restored auto-load refs preference to toggles
+        try:
+            self.query_one("#toggle-auto-load-refs", Switch).value = self.auto_load_refs
+        except Exception:
+            pass
+        try:
+            self.query_one("#dock-toggle-auto-load-refs", Switch).value = self.auto_load_refs
         except Exception:
             pass
 
@@ -4104,6 +4149,81 @@ class SovwrenIDE(App):
         except Exception as e:
             stream.add_message(f"[red]Operation failed: {e}[/red]", "error")
 
+    async def _handle_ref_load_consent(self, approved: bool) -> None:
+        """Handle /load-yes and /load-no for @ref file loading consent."""
+        stream = self.query_one(NeuralStream)
+
+        pending = self._pending_ref_load
+        if not pending:
+            stream.add_message("[yellow]No pending @ref load request.[/yellow]", "system")
+            return
+
+        if not approved:
+            self._pending_ref_load = None
+            stream.add_message("[dim]@ref loading cancelled.[/dim]", "system")
+            return
+
+        refs = pending.get("refs", [])
+        original_message = pending.get("message", "")
+        self._pending_ref_load = None
+
+        # Load files into context injection
+        await self._load_refs_into_context(refs, stream)
+
+        # Now send the original message (ref detection will be skipped since _ref_context_injection is set)
+        await self._send_message(original_message)
+
+    def _extract_refs_from_message(self, message: str) -> list[str]:
+        """Extract @ref tokens from a message."""
+        import re
+        # Match @followed by path-like characters (no spaces)
+        refs = re.findall(r'@([\w./\\-]+)', message)
+        return [f"@{r}" for r in refs]
+
+    def _message_has_load_verb(self, message: str) -> bool:
+        """Check if message contains a verb that authorizes @ref loading."""
+        msg_lower = message.lower()
+        for verb in self.REF_LOAD_VERBS:
+            if verb in msg_lower:
+                return True
+        return False
+
+    async def _load_refs_into_context(self, refs: list[str], stream) -> None:
+        """Load @ref file contents into context injection for the next message."""
+        context_parts: list[str] = []
+        loaded_files: list[str] = []
+
+        for ref in refs:
+            rel_path = ref.lstrip("@")
+            file_path = workspace_root / rel_path
+
+            if not file_path.exists():
+                stream.add_message(f"[yellow]@{rel_path} not found, skipping.[/yellow]", "system")
+                continue
+
+            if not file_path.is_file():
+                stream.add_message(f"[yellow]@{rel_path} is not a file, skipping.[/yellow]", "system")
+                continue
+
+            try:
+                content = file_path.read_text(encoding="utf-8", errors="replace")
+                if len(content) > 50000:  # ~12k tokens limit per file
+                    content = content[:50000] + "\n... (truncated)"
+                    stream.add_message(f"[dim]@{rel_path} truncated (>50KB).[/dim]", "system")
+
+                context_parts.append(f"=== File: {rel_path} ===\n{content}\n=== End: {rel_path} ===")
+                loaded_files.append(rel_path)
+            except Exception as e:
+                stream.add_message(f"[yellow]Failed to read @{rel_path}: {e}[/yellow]", "system")
+
+        if loaded_files:
+            stream.add_message(f"[dim]📄 Loaded: {', '.join(loaded_files)}[/dim]", "system")
+
+        if context_parts:
+            self._ref_context_injection = "\n\n".join(context_parts)
+        else:
+            self._ref_context_injection = None
+
     async def connect_to_node(self) -> None:
         """Attempt to connect to LM Studio."""
         stream = self.query_one(NeuralStream)
@@ -4335,11 +4455,27 @@ class SovwrenIDE(App):
         await self._send_message(message)
 
     async def _send_message(self, message: str) -> None:
-        """Core message sending logic."""
+        """Core message sending logic with verb-gated @ref resolution."""
         if not message:
             return
 
         stream = self.query_one(NeuralStream)
+
+        # Verb-gated @ref resolution (Monday's rule: "Verbs authorize access")
+        # Skip if files already loaded (consent flow completed)
+        if not self._ref_context_injection:
+            refs = self._extract_refs_from_message(message)
+            if refs and self._message_has_load_verb(message):
+                if self.auto_load_refs:
+                    # Auto-load enabled: load files silently
+                    await self._load_refs_into_context(refs, stream)
+                else:
+                    # Consent required: prompt and defer
+                    ref_list = ", ".join(refs)
+                    stream.add_message(f"[dim]📄 {ref_list} referenced.[/dim]", "system")
+                    stream.add_message("[yellow]Load into context? [/load-yes] [/load-no][/yellow]", "system")
+                    self._pending_ref_load = {"refs": refs, "message": message}
+                    return
 
         # Show user message (with timestamp if enabled)
         ts_prefix = f"[dim]{datetime.now().strftime('%H:%M')}[/dim] " if self.show_timestamps else ""
@@ -4402,6 +4538,12 @@ class SovwrenIDE(App):
             context_parts: list[str] = []
             sources_used = []
 
+            # Inject @ref file contents if loaded (verb-gated resolution)
+            if self._ref_context_injection:
+                context_parts.append("Referenced files:\n" + self._ref_context_injection)
+                sources_used.append("@refs")
+                self._ref_context_injection = None  # Clear after use
+
             # Inject recent conversation so "resume" is real, not vibes.
             history_context = self._format_recent_history(max_turns=self.HISTORY_CONTEXT_TURNS, exclude_latest=True)
             if history_context:
@@ -4421,6 +4563,13 @@ class SovwrenIDE(App):
                 # Generic confirmations for destructive operations
                 if msg_lower in ("/confirm-yes", "/confirm-no"):
                     await self._handle_confirm(approved=(msg_lower == "/confirm-yes"))
+                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
+                        self.conversation_history.pop()
+                    return
+
+                # @ref load consent confirmations
+                if msg_lower in ("/load-yes", "/load-no"):
+                    await self._handle_ref_load_consent(approved=(msg_lower == "/load-yes"))
                     if self.conversation_history and self.conversation_history[-1] == ("steward", message):
                         self.conversation_history.pop()
                     return
@@ -5166,6 +5315,29 @@ Output ONLY valid JSON."""
             # Persist preference
             if self.db:
                 asyncio.create_task(self.db.set_preference(self.PREF_SHOW_TIMESTAMPS_KEY, str(event.value).lower()))
+
+        elif event.switch.id in ("toggle-auto-load-refs", "dock-toggle-auto-load-refs"):
+            self.auto_load_refs = event.value
+            # Sync both switches
+            self._syncing_switches = True
+            try:
+                self.query_one("#toggle-auto-load-refs", Switch).value = event.value
+            except Exception:
+                pass
+            try:
+                self.query_one("#dock-toggle-auto-load-refs", Switch).value = event.value
+            except Exception:
+                pass
+            self._syncing_switches = False
+            # Persist preference
+            if self.db:
+                asyncio.create_task(self.db.set_preference(self.PREF_AUTO_LOAD_REFS_KEY, str(event.value).lower()))
+            # Notify user
+            stream = self.query_one(NeuralStream)
+            if self.auto_load_refs:
+                stream.add_message("[dim]📄 Auto-load @refs: On (verbs will load files without asking)[/dim]", "system")
+            else:
+                stream.add_message("[dim]📄 Auto-load @refs: Off (will ask before loading)[/dim]", "system")
 
         elif event.switch.id in ("toggle-search-gate", "dock-toggle-search-gate"):
             # Friction Class VI: Search Gate consent toggle

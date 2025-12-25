@@ -110,6 +110,90 @@ class FileImportModal(Screen):
             self.dismiss({"action": "cancel"})
 
 
+class AttachFileModal(Screen):
+    """Modal for selecting workspace files to attach as @refs."""
+
+    CSS = """
+    AttachFileModal {
+        align: center middle;
+        background: rgba(0, 0, 0, 0.5);
+    }
+    #attach-dialog {
+        width: 70%;
+        height: 70%;
+        background: #000000;
+        border: solid #1a1a1a;
+        padding: 1;
+    }
+    #attach-file-list {
+        height: 1fr;
+        margin: 1 0;
+        border: solid #1a1a1a;
+        background: #050505;
+    }
+    #attach-filter {
+        width: 100%;
+        margin-bottom: 1;
+    }
+    #attach-buttons {
+        height: auto;
+        align: right middle;
+    }
+    #attach-buttons Button {
+        margin-left: 1;
+    }
+    """
+
+    def __init__(self, files: list[str]):
+        super().__init__()
+        self.all_files = files
+        self.filtered_files = files[:100]  # Limit initial display
+
+    def compose(self) -> ComposeResult:
+        with Container(id="attach-dialog"):
+            yield Label("[b]Attach File[/b]", classes="panel-header")
+            yield Static(f"[dim]{len(self.all_files)} files in workspace[/dim]")
+            yield Input(placeholder="Filter files...", id="attach-filter")
+            yield OptionList(*self.filtered_files[:50], id="attach-file-list")
+            with Horizontal(id="attach-buttons"):
+                yield Button("Cancel", id="btn-attach-cancel")
+                yield Button("Attach", id="btn-attach-confirm", variant="success")
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id == "attach-filter":
+            query = event.value.lower().strip()
+            if query:
+                self.filtered_files = [f for f in self.all_files if query in f.lower()][:50]
+            else:
+                self.filtered_files = self.all_files[:50]
+            try:
+                file_list = self.query_one("#attach-file-list", OptionList)
+                file_list.clear_options()
+                file_list.add_options(self.filtered_files)
+                if self.filtered_files:
+                    file_list.highlighted = 0
+            except Exception:
+                pass
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-attach-confirm":
+            try:
+                file_list = self.query_one("#attach-file-list", OptionList)
+                if file_list.highlighted is not None:
+                    option = file_list.get_option_at_index(file_list.highlighted)
+                    self.dismiss({"file": str(option.prompt)})
+                    return
+            except Exception:
+                pass
+            self.dismiss(None)
+        else:
+            self.dismiss(None)
+
+    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        """Double-click or Enter on option selects it."""
+        self.dismiss({"file": str(event.option.prompt)})
+
+
 class CommitModal(Screen):
     """Modal for entering git commit message."""
     CSS = """
@@ -1892,6 +1976,33 @@ class SovwrenIDE(App):
         height: 3;
         padding: 0;
         background: #000000;
+        layout: horizontal;
+    }
+    #btn-attach {
+        width: 3;
+        height: 1;
+        min-width: 3;
+        background: #000000;
+        border: none;
+        color: #505050;
+        text-align: center;
+        margin-top: 1;
+    }
+    #btn-attach:hover {
+        color: #808080;
+    }
+    #btn-dock-toggle {
+        width: 3;
+        height: 1;
+        min-width: 3;
+        background: #000000;
+        border: none;
+        color: #505050;
+        text-align: center;
+        margin-top: 1;
+    }
+    #btn-dock-toggle:hover {
+        color: #808080;
     }
     #mention-suggestions {
         display: none;
@@ -1904,7 +2015,7 @@ class SovwrenIDE(App):
         padding: 0 1;
     }
     #chat-input {
-        width: 100%;
+        width: 1fr;
         height: 100%;
         background: #000000;
         border: none;
@@ -2203,7 +2314,9 @@ class SovwrenIDE(App):
                     yield NeuralStream()
                     yield OptionList(id="mention-suggestions")
                     with Container(id="input-container"):
+                        yield Button("+", id="btn-attach")
                         yield ChatInput(id="chat-input", show_line_numbers=False)
+                        yield Button("☰", id="btn-dock-toggle")
                 # Inline spine editor (shown in spine-editor mode, Tall layout only)
                 with Vertical(id="spine-editor"):
                     with Horizontal(id="spine-editor-toolbar"):
@@ -3655,6 +3768,31 @@ class SovwrenIDE(App):
 
         return self.DEFAULT_CONTEXT_WINDOW
 
+    # ==================== ATTACH FILE MODAL ====================
+
+    def _open_attach_modal(self) -> None:
+        """Open the attach file modal for selecting workspace files."""
+        files = getattr(self, "_workspace_file_index", None) or []
+        if not files:
+            self.notify("No files in workspace to attach", severity="warning")
+            return
+        self.push_screen(AttachFileModal(files=files), self._on_attach_file_selected)
+
+    def _on_attach_file_selected(self, result: dict | None) -> None:
+        """Handle attach file modal result."""
+        if not result or "file" not in result:
+            return
+
+        file_path = result["file"]
+        try:
+            chat_input = self.query_one("#chat-input", ChatInput)
+            # Insert @ref at cursor position
+            chat_input.insert(f"@{file_path} ")
+            chat_input.focus()
+            self.notify(f"Attached: {file_path}", severity="information")
+        except Exception as e:
+            self.notify(f"Failed to attach: {e}", severity="error")
+
     async def _handle_council_command(self, message: str) -> None:
         """Handle /council command for cloud model consultation.
 
@@ -4560,6 +4698,16 @@ class SovwrenIDE(App):
         """Handle button presses."""
         button_id = event.button.id
         stream = self.query_one(NeuralStream)
+
+        # Attach file button
+        if button_id == "btn-attach":
+            self._open_attach_modal()
+            return
+
+        # Dock toggle button
+        if button_id == "btn-dock-toggle":
+            self.action_toggle_dock()
+            return
 
         # Spine editor buttons (Tall layout)
         if button_id == "btn-spine-save":

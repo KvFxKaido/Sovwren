@@ -2358,6 +2358,14 @@ class SovwrenIDE(App):
         self.title = "Sovwren v0.1"
         self.sub_title = ""
 
+        # Initialize Header icon to empty moon (context indicator, not command palette)
+        try:
+            from textual.widgets._header import HeaderIcon
+            header_icon = self.query_one(HeaderIcon)
+            header_icon.icon = "○"  # Empty moon = low context
+        except Exception:
+            pass
+
         # Set initial mode for border color
         self.add_class("mode-workshop")
 
@@ -5721,7 +5729,26 @@ Output ONLY valid JSON."""
         except Exception:
             pass
 
+        # Update Header icon with context moon phase
+        try:
+            from textual.widgets._header import HeaderIcon
+            header_icon = self.query_one(HeaderIcon)
+            glyph = self._get_context_glyph_for_band(band)
+            header_icon.icon = glyph
+        except Exception:
+            pass
+
         return band
+
+    def _get_context_glyph_for_band(self, band: str) -> str:
+        """Get moon glyph for a context band string."""
+        if "Critical" in band:
+            return "●"  # Full moon
+        elif "High" in band:
+            return "◑"  # Half moon
+        elif "Medium" in band:
+            return "◔"  # Quarter moon
+        return "○"  # Empty moon
 
     def _surface_context_transition(self, from_band: str, to_band: str) -> None:
         """Surface context band transitions to the user immediately.

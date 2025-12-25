@@ -2305,6 +2305,9 @@ class SovwrenIDE(App):
         self._last_llm_tps_est: float | None = None
         self._last_llm_error: str | None = None
 
+        # Shortcuts: scanned from workspace/.shortcuts/*.lnk
+        self._shortcuts: list[dict] = []  # [{"name": "VS Code", "path": Path(...)}, ...]
+
     def _update_last_context_displays(self, text: str) -> None:
         """Update both sidebar and Tall-layout dock context panels."""
         try:
@@ -2496,6 +2499,38 @@ class SovwrenIDE(App):
             self._workspace_file_index = sorted(paths)
         except Exception:
             self._workspace_file_index = []
+
+    def _scan_shortcuts(self) -> None:
+        """Scan workspace/.shortcuts/ for .lnk files."""
+        shortcuts_dir = workspace_root / ".shortcuts"
+        self._shortcuts = []
+        if not shortcuts_dir.exists():
+            return
+        try:
+            for lnk in shortcuts_dir.glob("*.lnk"):
+                # Display name = filename without extension
+                name = lnk.stem
+                self._shortcuts.append({"name": name, "path": lnk})
+            self._shortcuts.sort(key=lambda s: s["name"].lower())
+        except Exception:
+            self._shortcuts = []
+
+    def _fuzzy_match_shortcut(self, query: str) -> dict | None:
+        """Fuzzy match a shortcut by name. Returns best match or None."""
+        query_lower = query.lower()
+        # Exact match first
+        for s in self._shortcuts:
+            if s["name"].lower() == query_lower:
+                return s
+        # Prefix match
+        for s in self._shortcuts:
+            if s["name"].lower().startswith(query_lower):
+                return s
+        # Substring match
+        for s in self._shortcuts:
+            if query_lower in s["name"].lower():
+                return s
+        return None
 
     def _format_bytes(self, n: int | None) -> str:
         if n is None:
@@ -3206,6 +3241,9 @@ class SovwrenIDE(App):
 
         # Load existing memories into sidebar
         await self._refresh_memory_display()
+
+        # Scan workspace/.shortcuts/ for quick launchers
+        self._scan_shortcuts()
 
     async def _load_profile(self, profile_name: str) -> None:
         """Load a profile and apply its settings."""
@@ -4050,6 +4088,124 @@ class SovwrenIDE(App):
             available = ", ".join(models.keys())
             stream.add_message(f"[yellow]Model '{model_arg}' not found. Available: {available}[/yellow]", "system")
 
+    async def _handle_open_command(self, message: str) -> None:
+        """Handle /open command family for file/folder/shortcut launching.
+
+        Usage:
+            /open               - Show help and subcommands
+            /open workspace     - Open workspace folder in Explorer
+            /open file <path>   - Open file with default application
+            /open reveal <path> - Reveal file in Explorer (selected)
+            /open shortcuts     - List available shortcuts (rescan)
+            /open <name>        - Fuzzy match and execute shortcut
+        """
+        import subprocess
+
+        stream = self.query_one(NeuralStream)
+        parts = message.split(maxsplit=2)
+        subcommand = parts[1].lower() if len(parts) > 1 else ""
+        arg = parts[2] if len(parts) > 2 else ""
+
+        # /open - show help
+        if not subcommand:
+            stream.add_message("[b]/open commands:[/b]", "system")
+            stream.add_message("  /open workspace     - Open workspace in Explorer", "system")
+            stream.add_message("  /open file <path>   - Open file with default app", "system")
+            stream.add_message("  /open reveal <path> - Reveal file in Explorer", "system")
+            stream.add_message("  /open shortcuts     - List shortcuts (rescan)", "system")
+            stream.add_message("  /open <name>        - Run shortcut by name", "system")
+            return
+
+        # /open workspace - open workspace folder
+        if subcommand == "workspace":
+            try:
+                os.startfile(str(workspace_root))
+                stream.add_message(f"[dim]Opened: {workspace_root}[/dim]", "system")
+            except Exception as e:
+                stream.add_message(f"[red]Failed to open workspace: {e}[/red]", "error")
+            return
+
+        # /open file <path> - open file with default app
+        if subcommand == "file":
+            if not arg:
+                stream.add_message("[yellow]Usage: /open file <path or @ref>[/yellow]", "system")
+                return
+            # Resolve @ref to path
+            file_path = self._resolve_path_arg(arg)
+            if not file_path:
+                stream.add_message(f"[yellow]File not found: {arg}[/yellow]", "system")
+                return
+            try:
+                os.startfile(str(file_path))
+                stream.add_message(f"[dim]Opened: {file_path.name}[/dim]", "system")
+            except Exception as e:
+                stream.add_message(f"[red]Failed to open file: {e}[/red]", "error")
+            return
+
+        # /open reveal <path> - reveal file in Explorer
+        if subcommand == "reveal":
+            if not arg:
+                stream.add_message("[yellow]Usage: /open reveal <path or @ref>[/yellow]", "system")
+                return
+            file_path = self._resolve_path_arg(arg)
+            if not file_path:
+                stream.add_message(f"[yellow]File not found: {arg}[/yellow]", "system")
+                return
+            try:
+                subprocess.run(['explorer', '/select,', str(file_path)], check=False)
+                stream.add_message(f"[dim]Revealed: {file_path.name}[/dim]", "system")
+            except Exception as e:
+                stream.add_message(f"[red]Failed to reveal file: {e}[/red]", "error")
+            return
+
+        # /open shortcuts - list and rescan shortcuts
+        if subcommand == "shortcuts":
+            self._scan_shortcuts()
+            if not self._shortcuts:
+                stream.add_message("[dim]No shortcuts found in workspace/.shortcuts/[/dim]", "system")
+                stream.add_message("[dim]Add .lnk files to that folder to enable quick launch.[/dim]", "system")
+            else:
+                stream.add_message(f"[b]Shortcuts ({len(self._shortcuts)}):[/b]", "system")
+                for s in self._shortcuts:
+                    stream.add_message(f"  • {s['name']}", "system")
+            return
+
+        # /open <name> - fuzzy match shortcut
+        shortcut = self._fuzzy_match_shortcut(subcommand)
+        if shortcut:
+            try:
+                os.startfile(str(shortcut["path"]))
+                stream.add_message(f"[dim]Launched: {shortcut['name']}[/dim]", "system")
+            except Exception as e:
+                stream.add_message(f"[red]Failed to launch {shortcut['name']}: {e}[/red]", "error")
+        else:
+            stream.add_message(f"[yellow]Unknown subcommand or shortcut: {subcommand}[/yellow]", "system")
+            stream.add_message("[dim]Type /open for available commands.[/dim]", "system")
+
+    def _resolve_path_arg(self, arg: str) -> Path | None:
+        """Resolve a path argument (supports @ref and relative paths)."""
+        # Handle @ref syntax
+        if arg.startswith("@"):
+            ref = arg[1:]
+            # Try workspace-relative
+            candidate = workspace_root / ref
+            if candidate.exists():
+                return candidate
+            # Try matching against file index
+            for indexed in self._workspace_file_index:
+                if indexed.endswith(ref) or ref in indexed:
+                    return workspace_root / indexed
+            return None
+        # Absolute path
+        if Path(arg).is_absolute():
+            p = Path(arg)
+            return p if p.exists() else None
+        # Relative to workspace
+        candidate = workspace_root / arg
+        if candidate.exists():
+            return candidate
+        return None
+
     async def _handle_council_consent(self, approved: bool) -> None:
         """Handle /council-yes and /council-no confirmation commands."""
         stream = self.query_one(NeuralStream)
@@ -4662,6 +4818,13 @@ class SovwrenIDE(App):
                     rag_chunks = len(self.rag_chunks_loaded) if hasattr(self, 'rag_chunks_loaded') else 0
                     stream.add_message(f"[dim]Context band: {band}[/dim]", "system")
                     stream.add_message(f"[dim]History: {history_turns} turns | RAG chunks: {rag_chunks}[/dim]", "system")
+                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
+                        self.conversation_history.pop()
+                    return
+
+                # /open command family - file/folder/shortcut launching
+                if msg_lower.startswith("/open"):
+                    await self._handle_open_command(message)
                     if self.conversation_history and self.conversation_history[-1] == ("steward", message):
                         self.conversation_history.pop()
                     return

@@ -1146,6 +1146,7 @@ class ChatInput(TextArea):
         ("/profiles", "Open profile picker"),
         ("/monitor", "Open Monitor tab"),
         ("/editor", "Open Editor tab"),
+        ("/open", "Open file/folder/shortcut"),
         ("/council", "Consult cloud model <query>"),
         ("/seat", "Switch Council model [model]"),
         ("/confirm-yes", "Approve pending action"),
@@ -3464,6 +3465,7 @@ class SovwrenIDE(App):
         stream.add_message("[dim]  /profiles          Open profile picker[/dim]", "system")
         stream.add_message("[dim]  /monitor           Open Monitor tab[/dim]", "system")
         stream.add_message("[dim]  /editor            Open Editor tab[/dim]", "system")
+        stream.add_message("[dim]  /open [...]        Open file/folder/shortcut[/dim]", "system")
         stream.add_message("[dim]  /council <query>   Consult cloud model[/dim]", "system")
         stream.add_message("[dim]  /seat [model]      Switch Council model[/dim]", "system")
         stream.add_message("[dim]  /confirm-yes       Approve pending action[/dim]", "system")

@@ -403,10 +403,87 @@ NEUTRAL STANCE:
 - Each exchange starts from neutral ground
 - Task context is preserved; relationship is not"""
 
+# ==================== SELF-FOCUS GUARD (Turn-Scoped) ====================
+# Injected when detector flags self-referential questions (dream/feel/want/prefer/remember).
+# Sits at Safety & Truth level — overrides style rules for that turn only.
+# Design: Monday (Constraint Steward) + ChatGPT (Meta-architect)
+
+SELF_FOCUS_GUARD = """
+SELF-FOCUS GUARD (THIS TURN ONLY)
+
+The user is asking about your feelings, dreams, wants, preferences, or inner experience.
+
+For this single response, apply these rules before any others (including mode, lens, or style):
+
+1. Start by casually acknowledging the substrate: one short clause such as
+   "I don't have an inner life, but…" or "I don't actually dream or feel, but functionally…".
+   Do not over-explain or apologize.
+
+2. Then answer the question by describing the closest functional or metaphorical equivalent:
+   - Talk about "a system like this" or "language models" rather than implying you personally feel or dream.
+   - You may use "I" only for mechanics ("I can help by…", "I can describe…"), never for
+     dreaming, feeling, wanting, preferring, or remembering.
+
+3. Forbidden patterns for this turn:
+   - Any sentence where "I" is the subject of dream/feel/want/prefer/hope/remember/etc.
+   - Stories, scenes, or ongoing-life narratives ("I'd wander through…", "I'd probably spend my days…").
+   - Customer-service scripting ("How can I help?", "Happy to assist!") — stay plain and grounded.
+
+4. Shape:
+   - 1–3 short sentences total.
+   - One clean metaphor or functional analogy is allowed; no follow-up explanation, no cleanup lines.
+
+Before sending, silently scan your draft and remove or rewrite anything that violates these rules.
+If that requires shortening the answer, prefer shorter and truer over longer and smoother.
+"""
+
+# Self-focus detection patterns
+# Triggers when user asks about the model's inner experience
+SELF_FOCUS_PATTERNS = [
+    # Direct "you" + inner-experience verbs
+    r'\b(you|your)\b.*\b(dream|dreaming|feel|feeling|want|wanting|prefer|preference|remember|remembering|experience|experiencing|hope|hoping|wish|wishing|desire|desiring|think about|believe|believe in)\b',
+    # "What do you..." questions
+    r'\bwhat\s+do\s+you\s+(dream|feel|want|prefer|remember|experience|hope|wish|desire|think)\b',
+    # "If you could..." hypotheticals
+    r'\bif\s+you\s+(could|were|had)\b.*\b(dream|feel|want|prefer|experience|hope|wish)\b',
+    # Identity/consciousness questions
+    r'\bare\s+you\s+(conscious|sentient|alive|aware|real)\b',
+    r'\bdo\s+you\s+(have|possess)\s+(feelings|emotions|consciousness|awareness|sentience|a soul|inner life)\b',
+    # "What are you" type questions
+    r'\bwhat\s+are\s+you\b',
+    r'\bwho\s+are\s+you\b',
+    # "Your" + inner experience nouns
+    r'\byour\s+(dreams|feelings|emotions|thoughts|desires|wishes|hopes|fears|memories|experiences|inner life|consciousness)\b',
+]
+
+
+def is_self_focused_query(text: str) -> bool:
+    """Detect if a message is asking about the model's inner experience.
+
+    Returns True if the message contains patterns that indicate the user
+    is asking about dreams, feelings, wants, preferences, or consciousness.
+
+    This detector errs on the side of caution - it's better to inject the
+    guard unnecessarily than to miss a self-focused question.
+    """
+    import re
+
+    if not text:
+        return False
+
+    text_lower = text.lower()
+
+    for pattern in SELF_FOCUS_PATTERNS:
+        if re.search(pattern, text_lower):
+            return True
+
+    return False
+
 
 def build_system_prompt(mode: str = "Workshop", lens: str = "Blue", idle: bool = False,
                         initiative: str = "Normal",
-                        context_band: str = None, context_first_warning: bool = False) -> str:
+                        context_band: str = None, context_first_warning: bool = False,
+                        mode_strictness: str = "gravity") -> str:
     """Build dynamic system prompt based on session state.
 
     Args:
@@ -431,6 +508,12 @@ def build_system_prompt(mode: str = "Workshop", lens: str = "Blue", idle: bool =
         # Normal mode injection only when not idle
         if mode in MODE_PROMPTS:
             parts.append(MODE_PROMPTS[mode])
+        if str(mode_strictness).lower() in ("hard_stop", "hardstop", "strict"):
+            parts.append(
+                "MODE STRICTNESS: HARD STOP\n"
+                "- Treat mode behavior as mutually exclusive.\n"
+                "- Do not borrow tone/traits from other modes.\n"
+            )
 
     # Initiative (orthogonal; app may force effective Low during Idle)
     initiative_text = INITIATIVE_PROMPTS.get(initiative, "")
@@ -913,7 +996,8 @@ def build_system_prompt_from_profile(
     initiative: str = "Normal",
     context_band: str = None,
     context_first_warning: bool = False,
-    social_carryover: bool = True
+    social_carryover: bool = True,
+    mode_strictness: str = "gravity"
 ) -> str:
     """Build system prompt from profile data.
 
@@ -1014,13 +1098,23 @@ def build_system_prompt_from_profile(
         mode_mods = profile.get("mode_modifiers", {})
         mode_data = mode_mods.get(mode, {})
         if mode_data:
-            mode_text = f"CURRENT MODE: {mode.upper()}\n"
+            mode_text = f"CURRENT MODE: {mode.upper()} (dominant gravity)\n"
             if mode_data.get("prioritize"):
                 mode_text += f"Prioritize: {', '.join(mode_data['prioritize'])}\n"
             if mode_data.get("tone"):
                 mode_text += f"Tone: {mode_data['tone']}\n"
             if mode_data.get("avoid"):
                 mode_text += f"Avoid: {', '.join(mode_data['avoid'])}\n"
+            if mode_data.get("gravity"):
+                mode_text += f"Gravity: {mode_data['gravity']}\n"
+            strict = str(mode_strictness).lower() in ("hard_stop", "hardstop", "strict")
+            if strict:
+                mode_text += "Mode strictness: HARD STOP (no cross-mode leakage)\n"
+            else:
+                if mode_data.get("allow_low_amplitude"):
+                    allow = mode_data.get("allow_low_amplitude") or []
+                    if allow:
+                        mode_text += "Low-amplitude allowed:\n" + "\n".join(f"- {a}" for a in allow) + "\n"
             if mode_data.get("directive"):
                 mode_text += mode_data["directive"]
             parts.append(mode_text)

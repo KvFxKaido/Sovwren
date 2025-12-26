@@ -55,14 +55,16 @@ class BookmarkModal(Screen):
     #bookmark-dialog {
         width: 80%;
         height: 80%;
-        background: $surface;
-        border: thick $primary;
+        background: #050505;
+        border: thick #1a1a1a;
         padding: 1;
     }
     #bookmark-editor {
         height: 1fr;
         margin: 1 0;
-        border: solid $secondary;
+        background: #000000;
+        border: solid #1a1a1a;
+        color: #e0e0e0;
     }
     #dialog-buttons {
         height: auto;
@@ -215,13 +217,16 @@ class CommitModal(Screen):
         width: 60%;
         height: auto;
         max-height: 50%;
-        background: $surface;
-        border: thick $primary;
+        background: #050505;
+        border: thick #1a1a1a;
         padding: 1;
     }
     #commit-input {
         width: 100%;
         margin: 1 0;
+        background: #000000;
+        border: solid #1a1a1a;
+        color: #e0e0e0;
     }
     #commit-buttons {
         height: auto;
@@ -338,17 +343,23 @@ class ProfilePickerModal(Screen):
         width: 60%;
         height: auto;
         max-height: 80%;
-        background: $surface;
-        border: thick $primary;
+        background: #050505;
+        border: thick #1a1a1a;
         padding: 1;
     }
     #profile-list {
         height: auto;
         max-height: 20;
         margin: 1 0;
-        border: solid $secondary;
+        background: #000000;
+        border: solid #1a1a1a;
         padding: 1;
         overflow-y: auto;
+    }
+    #profile-input {
+        background: #000000;
+        border: solid #1a1a1a;
+        color: #e0e0e0;
     }
     #profile-buttons {
         height: auto;
@@ -452,14 +463,15 @@ class ModelPickerModal(Screen):
     #model-dialog {
         width: 70%;
         height: 70%;
-        background: $surface;
-        border: thick $primary;
+        background: #050505;
+        border: thick #1a1a1a;
         padding: 1;
     }
     #model-list {
         height: 1fr;
         margin: 1 0;
-        border: solid $secondary;
+        background: #000000;
+        border: solid #1a1a1a;
         padding: 1;
         overflow-y: auto;
     }
@@ -477,6 +489,11 @@ class ModelPickerModal(Screen):
     }
     #model-buttons Button {
         margin-left: 1;
+    }
+    #model-input {
+        background: #000000;
+        border: solid #1a1a1a;
+        color: #e0e0e0;
     }
     .backend-active {
         color: #8a6ab0;
@@ -571,18 +588,22 @@ class SessionPickerModal(Screen):
     #session-dialog {
         width: 80%;
         height: 70%;
-        background: $surface;
-        border: thick $primary;
+        background: #050505;
+        border: thick #1a1a1a;
         padding: 1;
     }
     #session-list {
         height: 1fr;
         margin: 1 0;
-        border: solid $secondary;
+        background: #000000;
+        border: solid #1a1a1a;
         padding: 1;
     }
     #session-input {
         margin: 1 0;
+        background: #000000;
+        border: solid #1a1a1a;
+        color: #e0e0e0;
     }
     #session-buttons {
         height: auto;
@@ -790,6 +811,11 @@ class ProtocolDeck(Vertical):
 
         # Secondary controls - collapsed by default
         with Collapsible(title="⋮ More", collapsed=True, id="settings-drawer"):
+            yield Label("[b]Mode Strictness[/b]", classes="panel-header")
+            with Horizontal(classes="toggle-row"):
+                yield Label("Hard Stop", classes="toggle-label")
+                yield Switch(value=False, id="toggle-mode-strictness")
+
             yield Label("[b]Lens[/b]", classes="panel-header")
             with Horizontal(classes="button-row"):
                 blue_btn = Button(LENS_BLUE, id="lens-blue", classes="lens-btn active")
@@ -913,6 +939,11 @@ class BottomDock(Vertical):
                 with Horizontal(classes="button-row"):
                     yield Button(f"{WRENCH} Workshop", id="dock-mode-workshop", classes="mode-btn active")
                     yield Button(f"{MOON} Sanctuary", id="dock-mode-sanctuary", classes="mode-btn")
+
+                yield Label("[b]Mode Strictness[/b]", classes="panel-header")
+                with Horizontal(classes="toggle-row"):
+                    yield Label("Hard Stop", classes="toggle-label")
+                    yield Switch(value=False, id="dock-toggle-mode-strictness")
                 
                 # Gates (essential)
                 yield Label("[b]Gates[/b]", classes="panel-header")
@@ -979,6 +1010,7 @@ class StatusBar(Static):
     search_gate = reactive("Local")  # "Local" or "Web (Provider)"
     council_gate = reactive("Off")  # "Off" or model shortname
     mode = reactive("Workshop")  # "Workshop" or "Sanctuary"
+    mode_strictness = reactive("gravity")  # "gravity" or "hard_stop"
     lens = reactive("Blue")  # "Blue", "Red", or "Purple"
     social_carryover = reactive(True)  # True = warm, False = neutral
     initiative = reactive("Normal")  # "Low", "Normal", or "High"
@@ -1040,6 +1072,10 @@ class StatusBar(Static):
             return WRENCH
         return MOON
 
+    def _get_mode_strictness_indicator(self) -> str:
+        """Get mode strictness indicator."""
+        return "!" if self.mode_strictness == "hard_stop" else ""
+
     def _get_social_indicator(self) -> str:
         """Get social carryover indicator."""
         if self.social_carryover:
@@ -1050,12 +1086,14 @@ class StatusBar(Static):
         """Build Truth Strip: Mode | Lens | Node | Connected."""
         status = "Connected" if self.connected else "Disconnected"
         init = self.INITIATIVE_GLYPHS.get(self.initiative, "N")
-        return f"{self.mode} | Init:{init} | {self.profile_name}: {self.model_name} | {status}"
+        strict = " HS" if self.mode_strictness == "hard_stop" else ""
+        return f"{self.mode}{strict} | Init:{init} | {self.profile_name}: {self.model_name} | {status}"
 
     def compose(self) -> ComposeResult:
         # Truth Strip layout: [Mode] [Lens] [Social] [Context●] [/] [] [Node info]
         with Horizontal(id="status-bar-content"):
             yield Label(self._get_mode_indicator(), id="mode-glyph")
+            yield Label(self._get_mode_strictness_indicator(), id="strict-glyph")
             yield Label(self._get_lens_glyph(), id="lens-glyph")
             yield Label(self._get_social_indicator(), id="social-glyph")
             yield Label(self._get_initiative_glyph(), id="initiative-glyph")
@@ -1079,6 +1117,15 @@ class StatusBar(Static):
         self.mode = mode
         try:
             self.query_one("#mode-glyph", Label).update(self._get_mode_indicator())
+            self._refresh_status_text()
+        except Exception:
+            pass
+
+    def update_mode_strictness(self, strictness: str) -> None:
+        """Update mode strictness indicator."""
+        self.mode_strictness = strictness
+        try:
+            self.query_one("#strict-glyph", Label).update(self._get_mode_strictness_indicator())
             self._refresh_status_text()
         except Exception:
             pass
@@ -1721,6 +1768,21 @@ class SovwrenIDE(App):
     /* AMOLED Theme: True black, soft text, quiet accents
        Rule: "Did this make me notice the interface less?" */
 
+    /* Submenus / overlays: stop looking like a different app showed up uninvited. */
+    CommandPalette {
+        background: rgba(0, 0, 0, 0.85);
+    }
+    CommandPalette Input {
+        background: #000000;
+        border: solid #1a1a1a;
+        color: #e0e0e0;
+    }
+    CommandPalette OptionList {
+        background: #050505;
+        border: solid #1a1a1a;
+        color: #e0e0e0;
+    }
+
     Screen {
         layout: vertical;
         align: center top;
@@ -2032,8 +2094,29 @@ class SovwrenIDE(App):
         background: #050505;
         border: solid #1a1a1a;
     }
-    #mention-suggestions Option {
+    #mention-suggestions > .option-list--option,
+    #mention-suggestions > .option-list--option-highlighted,
+    #mention-suggestions > .option-list--option-hover,
+    #mention-suggestions > .option-list--option-disabled {
         padding: 0 1;
+    }
+
+    /* Generic option lists (menus, pickers, palettes) */
+    OptionList {
+        background: #050505;
+        border: solid #1a1a1a;
+        color: #e0e0e0;
+    }
+    OptionList > .option-list--option-highlighted {
+        background: #1a1a1a;
+        color: #e0e0e0;
+    }
+    OptionList > .option-list--option-hover {
+        background: #0a0a0a;
+        color: #e0e0e0;
+    }
+    OptionList > .option-list--option-disabled {
+        color: #505050;
     }
     #chat-input {
         width: 1fr;
@@ -2057,7 +2140,7 @@ class SovwrenIDE(App):
         width: 100%;
     }
     /* Truth Strip glyphs - fixed width to prevent expansion */
-    #mode-glyph, #lens-glyph, #social-glyph, #initiative-glyph, #search-glyph, #council-glyph {
+    #mode-glyph, #strict-glyph, #lens-glyph, #social-glyph, #initiative-glyph, #search-glyph, #council-glyph {
         width: auto;
         margin-right: 1;
         color: #909090;
@@ -2132,7 +2215,7 @@ class SovwrenIDE(App):
       """
 
     # Essential bindings shown in footer (trim to avoid "icon salad")
-    # All bindings still work — /help lists them all
+    # All bindings still work - /help lists them all
     BINDINGS = [
         ("ctrl+q", "quit", "Quit"),
         ("ctrl+s", "save_file", "Save"),
@@ -2143,17 +2226,17 @@ class SovwrenIDE(App):
         Binding("ctrl+b", "toggle_dock", "Toggle Dock", show=False),
         Binding("ctrl+r", "sessions", "Sessions", show=False),
         Binding("ctrl+w", "close_tab", "Close Tab", show=False),
-        Binding("f2", "models", "Models", show=False),
-        Binding("f4", "log_rupture", "Rupture", show=False),
-        Binding("f5", "toggle_search_gate", "Search Gate", show=False),
-        Binding("f6", "toggle_council_gate", "Council Gate", show=False),
-        Binding("f7", "profiles", "Profiles", show=False),
+        Binding("f2", "models", "Models", show=False, priority=True),
+        Binding("f4", "log_rupture", "Rupture", show=False, priority=True),
+        Binding("f5", "toggle_search_gate", "Search Gate", show=False, priority=True),
+        Binding("f6", "toggle_council_gate", "Council Gate", show=False, priority=True),
+        Binding("f7", "profiles", "Profiles", show=False, priority=True),
         Binding("ctrl+o", "open_external", "Open in Editor", show=False),
         Binding("ctrl+j", "insert_newline", "Newline", show=False),
         # Some widgets (TextArea) claim Ctrl+K; make this binding win globally.
         Binding("ctrl+k", "toggle_social_carryover", "Social Carryover", show=False, priority=True),
         # Fallback for terminals/editors that swallow Ctrl+K (e.g. chorded keymaps).
-        Binding("f12", "toggle_social_carryover", "Social Carryover", show=False),
+        Binding("f12", "toggle_social_carryover", "Social Carryover", show=False, priority=True),
         Binding("ctrl+i", "cycle_initiative", "Cycle Initiative", show=False),
         Binding("ctrl+shift+i", "set_initiative_default", "Set Initiative Default", show=False),
         # Spine switching (works in both portrait and landscape)
@@ -2161,10 +2244,33 @@ class SovwrenIDE(App):
         Binding("alt+2", "spine_editor", "Editor Spine", show=False),
         Binding("alt+3", "spine_log", "Log Spine", show=False),
         # F-keys as a fallback for terminals that swallow Alt+number
-        Binding("f9", "spine_chat", "Chat Spine", show=False),
-        Binding("f10", "spine_editor", "Editor Spine", show=False),
-        Binding("f11", "spine_log", "Log Spine", show=False),
+        Binding("f9", "spine_chat", "Chat Spine", show=False, priority=True),
+        Binding("f10", "spine_editor", "Editor Spine", show=False, priority=True),
+        Binding("f11", "spine_log", "Log Spine", show=False, priority=True),
     ]
+
+    def _create_guarded_task(self, coro, *, label: str) -> None:
+        """Create an asyncio task and surface exceptions in the UI."""
+        task = asyncio.create_task(coro)
+
+        def _done(done_task: asyncio.Task) -> None:
+            try:
+                exc = done_task.exception()
+            except asyncio.CancelledError:
+                return
+
+            if exc is None:
+                return
+
+            try:
+                stream = self.query_one(NeuralStream)
+                stream.add_message(f"[red]{label} failed: {exc}[/red]", "error")
+            except Exception:
+                pass
+
+            self.notify(f"{label} failed: {exc}", severity="error")
+
+        task.add_done_callback(_done)
 
     def get_system_commands(self, screen):
         """Filter out the built-in theme command to preserve AMOLED styling."""
@@ -2193,6 +2299,7 @@ class SovwrenIDE(App):
     PREF_LAST_LENS_KEY = "last_lens"  # Preference key for lens persistence (Blue/Red/Purple)
     PREF_SHOW_TIMESTAMPS_KEY = "show_timestamps"  # Preference key for timestamp visibility (default: True)
     PREF_AUTO_LOAD_REFS_KEY = "auto_load_refs"  # Preference key for auto-loading @refs (default: False)
+    PREF_MODE_STRICTNESS_KEY = "mode_strictness"  # Preference key for mode strictness ("gravity" or "hard_stop")
 
     # Verb patterns that authorize @ref file loading (Monday's rule: "Verbs authorize access")
     REF_LOAD_VERBS = [
@@ -2255,6 +2362,7 @@ class SovwrenIDE(App):
         self.show_timestamps = True     # Message timestamps (default ON per Monday's spec)
         self.social_carryover = True    # Social Carryover: warm (True) or neutral (False)
         self.auto_load_refs = False     # Auto-load @refs without consent prompt (default OFF)
+        self.mode_strictness = "gravity"  # "gravity" (default) or "hard_stop"
 
         # Pending @ref load consent flow
         self._pending_ref_load: dict | None = None  # {"refs": [...], "message": "..."}
@@ -2481,6 +2589,18 @@ class SovwrenIDE(App):
             except Exception:
                 pass
 
+            # Load mode strictness preference (default gravity)
+            try:
+                saved_strictness = await self.db.get_preference(self.PREF_MODE_STRICTNESS_KEY, default="gravity")
+                if isinstance(saved_strictness, str):
+                    norm = saved_strictness.strip().lower()
+                    if norm in ("hard_stop", "hardstop", "strict", "true", "1", "yes", "on"):
+                        self.mode_strictness = "hard_stop"
+                    else:
+                        self.mode_strictness = "gravity"
+            except Exception:
+                pass
+
         # Apply restored mode to UI (class + buttons)
         self._apply_mode_to_ui(self.session_mode)
         self._apply_lens_to_ui(self.session_lens)
@@ -2502,6 +2622,25 @@ class SovwrenIDE(App):
             pass
         try:
             self.query_one("#dock-toggle-auto-load-refs", Switch).value = self.auto_load_refs
+        except Exception:
+            pass
+
+        # Apply restored mode strictness preference to toggles + status bar
+        strict_value = self.mode_strictness == "hard_stop"
+        self._syncing_switches = True
+        try:
+            try:
+                self.query_one("#toggle-mode-strictness", Switch).value = strict_value
+            except Exception:
+                pass
+            try:
+                self.query_one("#dock-toggle-mode-strictness", Switch).value = strict_value
+            except Exception:
+                pass
+        finally:
+            self._syncing_switches = False
+        try:
+            self.query_one(StatusBar).update_mode_strictness(self.mode_strictness)
         except Exception:
             pass
 
@@ -3678,21 +3817,29 @@ class SovwrenIDE(App):
 
     def action_models(self) -> None:
         """Open model picker modal."""
-        asyncio.create_task(self._open_model_picker())
+        self._create_guarded_task(self._open_model_picker(), label="Model picker")
 
     def action_profiles(self) -> None:
         """Open profile picker modal."""
-        asyncio.create_task(self._open_profile_picker())
+        self._create_guarded_task(self._open_profile_picker(), label="Profile picker")
 
     async def _open_profile_picker(self) -> None:
         """Open the profile picker modal."""
-        from config import get_all_profiles
+        try:
+            from config import get_all_profiles
 
-        profiles = get_all_profiles()
-        self.push_screen(
-            ProfilePickerModal(profiles=profiles, current_profile=self.current_profile_name),
-            self._handle_profile_choice,
-        )
+            profiles = get_all_profiles()
+            self.push_screen(
+                ProfilePickerModal(profiles=profiles, current_profile=self.current_profile_name),
+                self._handle_profile_choice,
+            )
+        except Exception as e:
+            try:
+                stream = self.query_one(NeuralStream)
+                stream.add_message(f"[red]Profile picker failed: {e}[/red]", "error")
+            except Exception:
+                pass
+            self.notify(f"Profile picker failed: {e}", severity="error")
 
     async def _handle_profile_choice(self, result: dict | None) -> None:
         """Handle profile picker result."""
@@ -4689,7 +4836,7 @@ class SovwrenIDE(App):
             self._last_llm_error = None
 
             # Build dynamic system prompt based on current state
-            from config import build_system_prompt, build_system_prompt_from_profile
+            from config import build_system_prompt, build_system_prompt_from_profile, is_self_focused_query, SELF_FOCUS_GUARD
 
             # Get current context band for prompt injection
             current_band = self._update_context_band()
@@ -4711,7 +4858,8 @@ class SovwrenIDE(App):
                     initiative=self._effective_initiative(),
                     context_band=current_band,
                     context_first_warning=first_warning,
-                    social_carryover=self.social_carryover
+                    social_carryover=self.social_carryover,
+                    mode_strictness=self.mode_strictness
                 )
             else:
                 system_prompt = build_system_prompt(
@@ -4720,8 +4868,15 @@ class SovwrenIDE(App):
                     idle=self.idle_mode,
                     initiative=self._effective_initiative(),
                     context_band=current_band,
-                    context_first_warning=first_warning
+                    context_first_warning=first_warning,
+                    mode_strictness=self.mode_strictness
                 )
+
+            # Self-Focus Guard: Inject turn-scoped constraint for self-referential questions
+            # Monday's rule: "no inner life" invariant needs dynamic enforcement, not just static persona text
+            if is_self_focused_query(message):
+                # Prepend guard at Safety & Truth level (overrides style rules)
+                system_prompt = SELF_FOCUS_GUARD + "\n\n" + system_prompt
 
             # Check for memory operations and build context
             context_parts: list[str] = []
@@ -5505,6 +5660,35 @@ Output ONLY valid JSON."""
                 stream.add_message(f"[cyan]{SEARCH} RAG Debug: On[/cyan]", "system")
             else:
                 stream.add_message(f"[dim]{SEARCH} RAG Debug: Off[/dim]", "system")
+
+        elif event.switch.id in ("toggle-mode-strictness", "dock-toggle-mode-strictness"):
+            self.mode_strictness = "hard_stop" if event.value else "gravity"
+            # Sync both switches
+            self._syncing_switches = True
+            try:
+                self.query_one("#toggle-mode-strictness", Switch).value = event.value
+            except Exception:
+                pass
+            try:
+                self.query_one("#dock-toggle-mode-strictness", Switch).value = event.value
+            except Exception:
+                pass
+            self._syncing_switches = False
+
+            # Persist preference
+            if self.db:
+                asyncio.create_task(self.db.set_preference(self.PREF_MODE_STRICTNESS_KEY, self.mode_strictness))
+
+            # Update status + notify
+            try:
+                self.query_one(StatusBar).update_mode_strictness(self.mode_strictness)
+            except Exception:
+                pass
+            stream = self.query_one(NeuralStream)
+            if self.mode_strictness == "hard_stop":
+                stream.add_message("[dim]Mode strictness: Hard Stop (no cross-mode leakage)[/dim]", "system")
+            else:
+                stream.add_message("[dim]Mode strictness: Dominant Gravity (low-amplitude leakage allowed)[/dim]", "system")
 
         elif event.switch.id in ("toggle-timestamps", "dock-toggle-timestamps"):
             self.show_timestamps = event.value

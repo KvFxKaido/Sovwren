@@ -88,6 +88,18 @@ Start one of:
 - **LM Studio** — Load a model and start the server (default: `http://127.0.0.1:1234/v1`)
 - **Ollama** — `ollama serve` (default: `http://localhost:11434`)
 
+### Presets
+
+Pre-configured model settings are available in `presets/`:
+
+- **LM Studio** — Import `presets/Sovwren.preset.json` in Settings → Presets
+- **Ollama** — Edit `presets/Sovwren.Modelfile` with your base model, then:
+  ```bash
+  ollama create sovwren -f presets/Sovwren.Modelfile
+  ```
+
+Presets include the Sovwren Node Primer and tuned generation parameters. See `presets/README.md` for details.
+
 ## Workspace
 
 The `workspace/` folder is your local space. Put documents, notes, and project files there. The file explorer defaults to this folder, and contents are gitignored.

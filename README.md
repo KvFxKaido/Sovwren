@@ -22,8 +22,8 @@ Sovwren makes these states explicit.
 - **Mode switching** — Workshop (building), Sanctuary (reflection), Idle (presence without output)
 - **Session bookmarks** — preserve what matters across resets
 - **Shared file tree** — see what the model sees
-- **Web search** — DuckDuckGo integration, no API key required
-- **RAG** — load local documents with source visibility
+- **Web search** — DuckDuckGo via `/search` command or F5 toggle. User-triggered only; sends query text, nothing else
+- **RAG** — load local documents with source visibility. Docs never leave your machine unless you confirm a Council Brief
 - **Council Gate** — hybrid local+cloud consultation for heavy reasoning tasks
 
 Local-first. Cloud optional. Connects to LM Studio or Ollama.
@@ -48,7 +48,7 @@ The local model (NeMo) prepares a **Brief** with your current context, sends it 
 - `/seat <model>` - Switch Council model (e.g., `/seat deepseek`)
 
 **Backends:**
-- **Ollama Cloud** (default) — Uses your local Ollama to route to cloud GPUs. Run `ollama login` to authenticate.
+- **Ollama Cloud** (default when Council enabled) — Uses your local Ollama to route to cloud GPUs. Run `ollama login` to authenticate. No cloud calls unless you toggle Council on.
 - **OpenRouter** — Set `SOVWREN_COUNCIL_PROVIDER=openrouter` and `OPENROUTER_API_KEY` for access to GPT-4, Claude, etc.
 
 ## Installation

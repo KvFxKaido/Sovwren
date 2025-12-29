@@ -1235,6 +1235,7 @@ class ChatInput(TextArea):
         ("/monitor", "Open Monitor tab"),
         ("/editor", "Open Editor tab"),
         ("/open", "Open file/folder/shortcut"),
+        ("/screenshot", "Export UI as SVG"),
         ("/council", "Consult cloud model <query>"),
         ("/ask-gemini", "Ask Gemini (Prototyping) <query>"),
         ("/ask-codex", "Ask Codex (Constraints) <query>"),
@@ -4375,6 +4376,32 @@ class SovwrenIDE(App):
             available = ", ".join(models.keys())
             stream.add_message(f"[yellow]Model '{model_arg}' not found. Available: {available}[/yellow]", "system")
 
+    def _handle_screenshot_command(self) -> None:
+        """Handle /screenshot command - export UI as SVG.
+
+        Saves a screenshot of the current UI state to workspace/screenshots/.
+        Useful for getting UI/UX feedback from AI chat interfaces.
+        """
+        from pathlib import Path
+
+        stream = self.query_one(NeuralStream)
+
+        # Create screenshots folder if needed
+        screenshots_dir = workspace_root / "screenshots"
+        screenshots_dir.mkdir(exist_ok=True)
+
+        # Generate filename with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"sovwren_{timestamp}.svg"
+        filepath = screenshots_dir / filename
+
+        try:
+            self.save_screenshot(str(filepath))
+            stream.add_message(f"[green]Screenshot saved:[/green] {filepath}", "system")
+            stream.add_message("[dim]Open the SVG in a browser or drop it into an AI chat for UI review.[/dim]", "system")
+        except Exception as e:
+            stream.add_message(f"[red]Screenshot failed: {e}[/red]", "error")
+
     async def _handle_open_command(self, message: str) -> None:
         """Handle /open command family for file/folder/shortcut launching.
 
@@ -5120,6 +5147,13 @@ class SovwrenIDE(App):
                 # /open command family - file/folder/shortcut launching
                 if msg_lower.startswith("/open"):
                     await self._handle_open_command(message)
+                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
+                        self.conversation_history.pop()
+                    return
+
+                # /screenshot - export UI as SVG
+                if msg_lower == "/screenshot":
+                    self._handle_screenshot_command()
                     if self.conversation_history and self.conversation_history[-1] == ("steward", message):
                         self.conversation_history.pop()
                     return

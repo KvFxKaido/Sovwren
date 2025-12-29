@@ -13,16 +13,17 @@ AGENTS.md
 AGENTS.override.md
 GEMINI.md
 FRICTION-SPEC.md
-COUNCIL-STATUS.md
-COUNCIL-BRIEF.md
-STATUS.md
+COUNCIL-STATUS.md 
 IDEAS.md
-METADATA.md
-CALIBRATION.md
+
 
 # Tuned profiles (keep minimal.json as public example)
-profiles/nemo.json
+profiles/sovwren.json
 profiles/oracle.json
+profiles/claude.json
+profiles/glados.json
+profiles/ultron.json
+profiles/experimental/
 
 # -------------------------------------------
 # User workspace (created on first run)
@@ -36,6 +37,8 @@ Bookmarks/
 Memory/
 data/
 Archive/
+alignment/
+metadata/
 Media/*
 !Media/Sovwren_Logo_2.jpg
 Images/

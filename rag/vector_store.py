@@ -10,6 +10,7 @@ import time
 
 from config import VECTOR_INDEX_PATH, TIMEOUTS, MAX_RETRIEVED_CHUNKS
 from .embeddings import embedding_manager
+from core.workspace_paths import find_repo_root
 
 class VectorStore:
     def __init__(self, index_path: str = str(VECTOR_INDEX_PATH)):
@@ -27,7 +28,79 @@ class VectorStore:
                 return
             
             await self._load_or_create_index()
+            await self._prune_missing_file_urls()
             self.is_initialized = True
+
+    @staticmethod
+    def _resolve_file_url(url: str) -> Path | None:
+        if not url or not isinstance(url, str):
+            return None
+        if not url.startswith("file://"):
+            return None
+
+        rel = url[len("file://") :]
+        rel = rel.lstrip("/\\")
+        if not rel:
+            return None
+
+        repo_root = find_repo_root(Path(__file__))
+        return (repo_root / Path(rel)).resolve()
+
+    def _is_missing_file_url(self, metadata: Dict) -> bool:
+        """Return True if this metadata points to a missing local file."""
+        try:
+            url = (metadata or {}).get("url", "")
+            path = self._resolve_file_url(url)
+            if path is None:
+                return False
+            return not path.exists()
+        except Exception:
+            return False
+
+    async def _prune_missing_file_urls(self) -> None:
+        """Drop vectors whose `file://...` source no longer exists by rebuilding the index."""
+        if not self.index or not self.document_map:
+            return
+
+        stale_keys = [
+            idx
+            for idx, doc_info in self.document_map.items()
+            if self._is_missing_file_url(doc_info.get("metadata", {}))
+        ]
+        if not stale_keys:
+            return
+
+        remaining_texts: list[str] = []
+        remaining_metadata: list[dict] = []
+        for idx, doc_info in self.document_map.items():
+            if idx in stale_keys:
+                continue
+            remaining_texts.append(doc_info.get("text", ""))
+            remaining_metadata.append(doc_info.get("metadata", {}))
+
+        print(f"Pruning {len(stale_keys)} stale vector(s) for deleted local file(s)...")
+
+        await embedding_manager.initialize()
+        self.dimension = embedding_manager.get_embedding_dimension()
+        self.index = faiss.IndexFlatIP(self.dimension)
+        self.document_map = {}
+
+        if remaining_texts:
+            embeddings = await embedding_manager.encode_text(remaining_texts)
+            norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+            zero_mask = norms == 0
+            if np.any(zero_mask):
+                norms = np.where(zero_mask, 1.0, norms)
+            embeddings = embeddings / norms
+
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self.index.add, embeddings.astype(np.float32))
+
+            now = time.time()
+            for i, (text, meta) in enumerate(zip(remaining_texts, remaining_metadata)):
+                self.document_map[i] = {"text": text, "metadata": meta, "added_at": now}
+
+        await self._save_index()
 
     async def _load_or_create_index(self):
         """Load existing index or create new one"""
@@ -179,6 +252,8 @@ class VectorStore:
             for sim, idx in zip(similarities[0], indices[0]):
                 if sim >= threshold and idx in self.document_map:
                     doc_info = self.document_map[idx]
+                    if self._is_missing_file_url(doc_info.get("metadata", {})):
+                        continue
                     results.append((
                         doc_info['text'],
                         float(sim),

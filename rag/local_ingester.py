@@ -232,7 +232,8 @@ class LocalIngester:
         # Define corpus directories with their document types
         # RAG is scoped to workspace folder only
         corpus_dirs = [
-            ("workspace/Bookmarks", ["**/*.txt", "**/*.md"]),
+            # Canonical bookmark location is `workspace/bookmarks/` (lowercase).
+            ("workspace/bookmarks", ["**/*.txt", "**/*.md"]),
         ]
 
         total_stats = {

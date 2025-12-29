@@ -3,7 +3,17 @@ REM Sovwren IDE Launcher (Windows)
 REM Friction-free first-run experience
 
 setlocal enabledelayedexpansion
+chcp 65001 >nul
+set PYTHONUTF8=1
 cd /d "%~dp0"
+
+REM Optional glyph sanity check (set SOVWREN_GLYPH_TEST=1)
+if /i "%SOVWREN_GLYPH_TEST%"=="1" (
+    echo.
+    echo Glyph test (U+F17C / U+F489 / U+F120):
+    powershell -NoProfile -Command "$OutputEncoding=[Console]::OutputEncoding=[Text.UTF8Encoding]::UTF8; Write-Host ([char]0xF17C) ([char]0xF489) ([char]0xF120)"
+    echo.
+)
 
 echo.
 echo Sovwren IDE

@@ -33,9 +33,9 @@ from config import (
 # CLI-based council seats: shortname -> (command_template, description)
 # {brief} will be replaced with the escaped brief text
 COUNCIL_CLI_SEATS: Dict[str, Tuple[str, str]] = {
-    "gemini": ('gemini -p "{brief}"', "Google Gemini CLI"),
-    "codex": ('codex exec "{brief}"', "OpenAI Codex CLI (Constraint Steward)"),
-    # "claude": ('claude -p "{brief}"', "Anthropic Claude CLI"),  # if installed
+    "gemini": ('gemini -p "{brief}"', "Google Gemini CLI (Prototyping Hat)"),
+    "codex": ('codex exec "{brief}"', "OpenAI Codex CLI (Constraint Steward Hat)"),
+    "claude": ('claude -p "{brief}"', "Anthropic Claude CLI (Architecture Hat)"),
 }
 
 
@@ -45,7 +45,7 @@ def _detect_available_cli_seats() -> Dict[str, Tuple[str, str]]:
     cli_executables = {
         "gemini": "gemini",
         "codex": "codex",
-        # "claude": "claude",
+        "claude": "claude",
     }
     for seat, exe in cli_executables.items():
         if shutil.which(exe):
@@ -379,6 +379,11 @@ class CouncilClient:
                     cmd = f'powershell -Command "codex exec (Get-Content -Raw \'{temp_path}\')"'
                 else:
                     cmd = f'codex exec "$(cat {shlex.quote(temp_path)})"'
+            elif seat == "claude":
+                if is_windows:
+                    cmd = f'powershell -Command "claude -p (Get-Content -Raw \'{temp_path}\')"'
+                else:
+                    cmd = f'claude -p "$(cat {shlex.quote(temp_path)})"'
             else:
                 # Fallback: try the template with escaped brief
                 escaped_brief = brief.replace('"', '\\"').replace('$', '\\$')

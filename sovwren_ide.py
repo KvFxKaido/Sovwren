@@ -5253,7 +5253,12 @@ class SovwrenIDE(App):
                 else:
                     # Standard message without reasoning
                     stream.add_message(f"{ts_prefix}[b]‹[/b] {display_text}", "node")
-                
+
+                # Add sources footer if RAG/Memory/Web sources were used
+                sources_footer = self._format_sources_footer(sources_used)
+                if sources_footer:
+                    stream.add_message(sources_footer, "hint")
+
                 # Track full response in conversation history (preserves reasoning for context)
                 self.conversation_history.append(("node", response))
                 self._trim_ram_history()
@@ -6014,6 +6019,39 @@ Output ONLY valid JSON."""
             pass
 
     # --- RESPONSE PROCESSING ---
+
+    def _format_sources_footer(self, sources: list[str]) -> str | None:
+        """
+        Format a sources footer for RAG-informed responses.
+
+        Args:
+            sources: List of source names (files, "Memory Store", "Web (N sources)")
+
+        Returns:
+            Formatted footer string, or None if no document sources
+        """
+        from glyphs import FILE
+
+        # Filter to actual document sources (not conversation history indicators)
+        doc_sources = []
+        for s in sources:
+            if s == "Memory Store":
+                doc_sources.append("memory.json")
+            elif s.startswith("Web ("):
+                doc_sources.append(s)  # Keep as-is: "Web (3 sources)"
+            elif s and not s.startswith("History"):
+                # RAG document - just the filename
+                doc_sources.append(s)
+
+        if not doc_sources:
+            return None
+
+        # Compact format: Sources: file1.md, file2.txt
+        sources_list = ", ".join(doc_sources[:5])  # Limit to 5
+        if len(doc_sources) > 5:
+            sources_list += f" +{len(doc_sources) - 5} more"
+
+        return f"[dim]{FILE} Sources: {sources_list}[/dim]"
 
     def _strip_reasoning_traces(self, response: str) -> tuple[str, str]:
         """

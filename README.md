@@ -36,7 +36,7 @@ When your local model hits its limits, consult a cloud model without leaving the
 /council How should I structure this database schema?
 ```
 
-The local model (NeMo) prepares a **Brief** with your current context, sends it to the cloud model (Council), and contextualizes the response. You see exactly what's happening — no silent escalation.
+The local model prepares a **Brief** with your current context, sends it to the cloud model (Council), and contextualizes the response. You see exactly what's happening — no silent escalation.
 
 **Commands:**
 - `F6` or cloud toggle - Enable/disable Council Gate
@@ -48,7 +48,8 @@ The local model (NeMo) prepares a **Brief** with your current context, sends it 
 - `/seat <model>` - Switch Council model (e.g., `/seat deepseek`)
 
 **Backends:**
-- **Ollama Cloud** (default when Council enabled) — Uses your local Ollama to route to cloud GPUs. Run `ollama login` to authenticate. No cloud calls unless you toggle Council on.
+- **CLI** (default) — Shells out to `gemini` and `codex` CLI tools directly. No cloud calls unless you toggle Council on.
+- **Ollama Cloud** — Set `SOVWREN_COUNCIL_PROVIDER=ollama`. Uses Ollama to route to cloud GPUs (`ollama login` to authenticate).
 - **OpenRouter** — Set `SOVWREN_COUNCIL_PROVIDER=openrouter` and `OPENROUTER_API_KEY` for access to GPT-4, Claude, etc.
 
 ## Installation

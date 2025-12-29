@@ -2301,7 +2301,7 @@ class SovwrenIDE(App):
     PREF_AUTO_LOAD_REFS_KEY = "auto_load_refs"  # Preference key for auto-loading @refs (default: False)
     PREF_MODE_STRICTNESS_KEY = "mode_strictness"  # Preference key for mode strictness ("gravity" or "hard_stop")
 
-    # Verb patterns that authorize @ref file loading (Monday's rule: "Verbs authorize access")
+    # Verb patterns that authorize @ref file loading (design principle: "Verbs authorize access")
     REF_LOAD_VERBS = [
         "look at", "looking at",
         "read", "reading",
@@ -2359,7 +2359,7 @@ class SovwrenIDE(App):
         self.session_lens = "Blue"
         self.idle_mode = False
         self.rag_debug_enabled = False  # RAG Debug Mode toggle
-        self.show_timestamps = True     # Message timestamps (default ON per Monday's spec)
+        self.show_timestamps = True     # Message timestamps (default ON - orientation beats vibes)
         self.social_carryover = True    # Social Carryover: warm (True) or neutral (False)
         self.auto_load_refs = False     # Auto-load @refs without consent prompt (default OFF)
         self.mode_strictness = "gravity"  # "gravity" (default) or "hard_stop"
@@ -4797,7 +4797,7 @@ class SovwrenIDE(App):
 
         stream = self.query_one(NeuralStream)
 
-        # Verb-gated @ref resolution (Monday's rule: "Verbs authorize access")
+        # Verb-gated @ref resolution (design principle: "Verbs authorize access")
         # Skip if files already loaded (consent flow completed)
         if not self._ref_context_injection:
             refs = self._extract_refs_from_message(message)
@@ -4873,7 +4873,7 @@ class SovwrenIDE(App):
                 )
 
             # Self-Focus Guard: Inject turn-scoped constraint for self-referential questions
-            # Monday's rule: "no inner life" invariant needs dynamic enforcement, not just static persona text
+            # Design principle: "no inner life" invariant needs dynamic enforcement, not just static persona text
             if is_self_focused_query(message):
                 # Prepend guard at Safety & Truth level (overrides style rules)
                 system_prompt = SELF_FOCUS_GUARD + "\n\n" + system_prompt

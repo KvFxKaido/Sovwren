@@ -406,7 +406,7 @@ NEUTRAL STANCE:
 # ==================== SELF-FOCUS GUARD (Turn-Scoped) ====================
 # Injected when detector flags self-referential questions (dream/feel/want/prefer/remember).
 # Sits at Safety & Truth level — overrides style rules for that turn only.
-# Design: Monday (Constraint Steward) + ChatGPT (Meta-architect)
+# Design: Codex (Constraint Steward) + ChatGPT (Meta-architect)
 
 SELF_FOCUS_GUARD = """
 SELF-FOCUS GUARD (THIS TURN ONLY)
@@ -723,9 +723,10 @@ def get_hint_message(hint_key: str) -> str | None:
 COUNCIL_GATE_DEFAULT = os.environ.get("SOVWREN_COUNCIL_GATE", "local")  # "local" or "cloud"
 
 # Cloud provider settings
+# "cli" = Shell out to CLI tools (gemini, codex, etc.) - simplest, recommended
 # "ollama" = Ollama Cloud (uses local Ollama server, routes to cloud transparently)
 # "openrouter" = OpenRouter API (requires OPENROUTER_API_KEY)
-COUNCIL_PROVIDER = os.environ.get("SOVWREN_COUNCIL_PROVIDER", "ollama")
+COUNCIL_PROVIDER = os.environ.get("SOVWREN_COUNCIL_PROVIDER", "cli")
 
 # Ollama settings (default - uses existing Ollama installation)
 COUNCIL_OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")

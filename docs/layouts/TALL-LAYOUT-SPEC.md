@@ -1,6 +1,6 @@
 # Tall Layout Specification
 
-**Author:** Monday (Constraint Steward) + Gemini (Prototyping)  
+**Author:** Codex (Constraint Steward) + Gemini (Prototyping)  
 **Status:** Approved — Ready for Canonization  
 **Date:** 2025-12-23
 
@@ -268,10 +268,10 @@ When deciding whether something deserves to stay visible:
 
 | Insight | Source |
 |---------|--------|
-| "Vertical screens want depth, not breadth" | Monday |
-| "One Spine, Many Organs" mental model | Monday |
-| Bottom dock > right sidebar | Monday |
-| Layout presets, not custom sliders | Monday |
+| "Vertical screens want depth, not breadth" | Codex |
+| "One Spine, Many Organs" mental model | Codex |
+| Bottom dock > right sidebar | Codex |
+| Layout presets, not custom sliders | Codex |
 | Antigravity reference layout | Shawn (screenshot) |
 | Textual widget mapping | Gemini |
 
@@ -279,7 +279,7 @@ When deciding whether something deserves to stay visible:
 
 ## Decisions (Resolved)
 
-The following were open questions during draft review. Monday's recommendations have been adopted.
+The following were open questions during draft review. Codex's recommendations have been adopted.
 
 | Question | Decision |
 |----------|----------|

@@ -895,6 +895,33 @@ class NeuralStream(ScrollableContainer):
         self.mount(Static(content, classes=css_class))
         self.scroll_end(animate=False)
 
+    def add_message_with_reasoning(self, content: str, reasoning: str, role: str = "node"):
+        """Add a message with a collapsible reasoning trace.
+
+        Args:
+            content: The main response to display
+            reasoning: The reasoning trace (from <think> blocks)
+            role: CSS role class for the main message
+        """
+        from glyphs import THOUGHT
+
+        # Add the main message
+        css_class = f"message {role}"
+        self.mount(Static(content, classes=css_class))
+
+        # Calculate word count for the reasoning
+        word_count = len(reasoning.split())
+
+        # Add collapsible reasoning trace
+        collapsible = Collapsible(
+            Static(reasoning, classes="reasoning-content"),
+            title=f"{THOUGHT} Reasoning ({word_count} words)",
+            collapsed=True,
+            classes="reasoning-collapsible"
+        )
+        self.mount(collapsible)
+        self.scroll_end(animate=False)
+
 
 class BottomDock(Vertical):
     """Bottom dock for Tall layout - Files, Context, Controls as tabs.
@@ -2060,6 +2087,28 @@ class SovwrenIDE(App):
     .error { color: #d46a6a; }
     .hint { color: #3a3a3a; text-style: italic; }  /* Ephemeral scaffolding: faint whisper */
     .card { color: #808080; margin: 1 0; }  /* Session Resume Card */
+
+    /* Reasoning Trace Collapsible */
+    .reasoning-collapsible {
+        margin: 0 1;
+        padding: 0;
+        background: #000000;
+    }
+    .reasoning-collapsible > CollapsibleTitle {
+        color: #3a3a3a;
+        padding: 0;
+        text-style: italic;
+    }
+    .reasoning-collapsible > CollapsibleTitle:hover {
+        color: #505050;
+    }
+    .reasoning-collapsible > Contents {
+        padding: 0 2;
+    }
+    .reasoning-content {
+        color: #404040;
+        padding: 0;
+    }
 
     /* Input Area */
     #input-container {
@@ -5193,11 +5242,17 @@ class SovwrenIDE(App):
                 # Strip reasoning traces for clean display
                 display_text, reasoning_text = self._strip_reasoning_traces(response)
                 ts_prefix = f"[dim]{datetime.now().strftime('%H:%M')}[/dim] " if self.show_timestamps else ""
-                stream.add_message(f"{ts_prefix}[b]‹[/b] {display_text}", "node")
-                
-                # Show hint if reasoning was stripped
+
                 if reasoning_text:
-                    stream.add_message(f"[dim italic]{THOUGHT} Reasoning trace hidden[/dim italic]", "system")
+                    # Show response with collapsible reasoning trace
+                    stream.add_message_with_reasoning(
+                        f"{ts_prefix}[b]‹[/b] {display_text}",
+                        reasoning_text,
+                        "node"
+                    )
+                else:
+                    # Standard message without reasoning
+                    stream.add_message(f"{ts_prefix}[b]‹[/b] {display_text}", "node")
                 
                 # Track full response in conversation history (preserves reasoning for context)
                 self.conversation_history.append(("node", response))

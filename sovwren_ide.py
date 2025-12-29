@@ -1236,6 +1236,9 @@ class ChatInput(TextArea):
         ("/editor", "Open Editor tab"),
         ("/open", "Open file/folder/shortcut"),
         ("/council", "Consult cloud model <query>"),
+        ("/ask-gemini", "Ask Gemini (Prototyping) <query>"),
+        ("/ask-codex", "Ask Codex (Constraints) <query>"),
+        ("/ask-claude", "Ask Claude (Architecture) <query>"),
         ("/seat", "Switch Council model [model]"),
         ("/confirm-yes", "Approve pending action"),
         ("/confirm-no", "Cancel pending action"),
@@ -1428,7 +1431,7 @@ class ChatInput(TextArea):
             # Parse command from "/<cmd>  [dim]desc[/dim]"
             command = selected.split("  ")[0].strip()
             # For commands that take arguments, add a space; otherwise just the command
-            needs_arg = command in ("/council", "/seat", "/bookmark")
+            needs_arg = command in ("/council", "/ask-gemini", "/ask-codex", "/ask-claude", "/seat", "/bookmark")
             replacement = f"{command} " if needs_arg else command
             start_loc = self._offset_to_location(start)
             end_loc = self._offset_to_location(end)
@@ -3678,6 +3681,9 @@ class SovwrenIDE(App):
         stream.add_message("[dim]  /editor            Open Editor tab[/dim]", "system")
         stream.add_message("[dim]  /open [...]        Open file/folder/shortcut[/dim]", "system")
         stream.add_message("[dim]  /council <query>   Consult cloud model[/dim]", "system")
+        stream.add_message("[dim]  /ask-gemini <q>    Ask Gemini (Prototyping)[/dim]", "system")
+        stream.add_message("[dim]  /ask-codex <q>     Ask Codex (Constraints)[/dim]", "system")
+        stream.add_message("[dim]  /ask-claude <q>    Ask Claude (Architecture)[/dim]", "system")
         stream.add_message("[dim]  /seat [model]      Switch Council model[/dim]", "system")
         stream.add_message("[dim]  /confirm-yes       Approve pending action[/dim]", "system")
         stream.add_message("[dim]  /confirm-no        Cancel pending action[/dim]", "system")
@@ -4240,6 +4246,66 @@ class SovwrenIDE(App):
 
         except Exception as e:
             stream.add_message(f"[red]Council error: {e}[/red]", "error")
+
+    async def _handle_ask_seat_command(self, message: str, seat: str) -> None:
+        """Handle /ask-gemini, /ask-codex, /ask-claude commands.
+
+        Direct single-seat Council query. No synthesis, no escalation.
+        Each command does exactly one thing.
+
+        Args:
+            message: The full command (e.g., "/ask-gemini review this code")
+            seat: The target seat ("gemini", "codex", "claude")
+        """
+        stream = self.query_one(NeuralStream)
+
+        # Extract query from command (e.g., "/ask-gemini " is 12 chars)
+        prefix_len = len(f"/ask-{seat} ")
+        query = message[prefix_len:].strip() if len(message) > prefix_len else ""
+
+        if not query:
+            stream.add_message(f"[yellow]/ask-{seat} requires a query. Usage: /ask-{seat} <your question>[/yellow]", "system")
+            return
+
+        # Check if Council Gate is open (consent)
+        if not self.council_gate_enabled:
+            stream.add_message(f"[yellow]Council Gate is closed. Enable it with F6 or the {CLOUD} toggle.[/yellow]", "system")
+            return
+
+        # Check if council client is available
+        if self.council_client is None:
+            stream.add_message("[yellow]Council not available.[/yellow]", "system")
+            return
+
+        # Check if the specific seat is available
+        if seat not in self.council_client.cli_seats:
+            available = ", ".join(self.council_client.cli_seats.keys()) or "none"
+            stream.add_message(f"[yellow]Seat '{seat}' not available. Available: {available}[/yellow]", "system")
+            return
+
+        # Hat descriptions for display
+        hats = {
+            "gemini": "Prototyping",
+            "codex": "Constraint Steward",
+            "claude": "Architecture",
+        }
+        hat = hats.get(seat, seat.title())
+
+        try:
+            stream.add_message(f"[dim]{CLOUD} Asking {seat.title()} ({hat})...[/dim]", "system")
+
+            # Direct query - no brief ceremony, just the question
+            response = await self.council_client.consult(query, seat=seat)
+
+            if response:
+                # Show response with seat attribution
+                ts_prefix = f"[dim]{datetime.now().strftime('%H:%M')}[/dim] " if self.show_timestamps else ""
+                stream.add_message(f"{ts_prefix}[#d4a574][{seat.title()}][/#d4a574] {response}", "node")
+            else:
+                stream.add_message(f"[yellow]No response from {seat.title()}.[/yellow]", "system")
+
+        except Exception as e:
+            stream.add_message(f"[red]{seat.title()} error: {e}[/red]", "error")
 
     def _handle_seat_command(self, message: str) -> None:
         """Handle /seat command for Council model switching.
@@ -5096,6 +5162,17 @@ class SovwrenIDE(App):
                 elif msg_lower.startswith('/council'):
                     await self._handle_council_command(message)
                     return  # Council command handled separately
+
+                # Check if this is a single-seat /ask-* command
+                elif msg_lower.startswith('/ask-gemini'):
+                    await self._handle_ask_seat_command(message, "gemini")
+                    return
+                elif msg_lower.startswith('/ask-codex'):
+                    await self._handle_ask_seat_command(message, "codex")
+                    return
+                elif msg_lower.startswith('/ask-claude'):
+                    await self._handle_ask_seat_command(message, "claude")
+                    return
 
                 # Check if this is a /seat command (Council model switching)
                 elif msg_lower.startswith('/seat'):

@@ -889,14 +889,14 @@ class ProtocolDeck(Vertical):
 
             yield Label("[b]Lens[/b]", classes="panel-header")
             with Horizontal(classes="button-row"):
-                blue_btn = Button(LENS_BLUE, id="lens-blue", classes="lens-btn active")
-                blue_btn.tooltip = "Blue - Analytical"
+                blue_btn = Button(f"[dodger_blue1]{LENS_BLUE}[/dodger_blue1]", id="lens-blue", classes="lens-btn active")
+                blue_btn.tooltip = "Blue - Grounded"
                 yield blue_btn
-                red_btn = Button(LENS_RED, id="lens-red", classes="lens-btn")
-                red_btn.tooltip = "Red - Direct"
+                red_btn = Button(f"[red1]{LENS_RED}[/red1]", id="lens-red", classes="lens-btn")
+                red_btn.tooltip = "Red - Gentle"
                 yield red_btn
-                purple_btn = Button(LENS_PURPLE, id="lens-purple", classes="lens-btn")
-                purple_btn.tooltip = "Purple - Reflective"
+                purple_btn = Button(f"[medium_purple]{LENS_PURPLE}[/medium_purple]", id="lens-purple", classes="lens-btn")
+                purple_btn.tooltip = "Purple - Patterned"
                 yield purple_btn
 
             yield Label("[b]Initiative[/b]", classes="panel-header panel-header-spaced")
@@ -1054,9 +1054,9 @@ class BottomDock(Vertical):
                 # Lens
                 yield Label("[b]Lens[/b]", classes="panel-header")
                 with Horizontal(classes="button-row"):
-                    yield Button(LENS_BLUE, id="dock-lens-blue", classes="lens-btn active")
-                    yield Button(LENS_RED, id="dock-lens-red", classes="lens-btn")
-                    yield Button(LENS_PURPLE, id="dock-lens-purple", classes="lens-btn")
+                    yield Button(f"[dodger_blue1]{LENS_BLUE}[/dodger_blue1]", id="dock-lens-blue", classes="lens-btn active")
+                    yield Button(f"[red1]{LENS_RED}[/red1]", id="dock-lens-red", classes="lens-btn")
+                    yield Button(f"[medium_purple]{LENS_PURPLE}[/medium_purple]", id="dock-lens-purple", classes="lens-btn")
 
                 # Initiative
                 yield Label("[b]Initiative[/b]", classes="panel-header")
@@ -1196,7 +1196,7 @@ class StatusBar(Static):
         with Horizontal(id="status-bar-content"):
             yield Label(self._get_mode_indicator(), id="mode-glyph")
             yield Label(self._get_mode_strictness_indicator(), id="strict-glyph")
-            yield Label(self._get_lens_glyph(), id="lens-glyph")
+            yield Label(self._get_lens_glyph(), id="lens-glyph", classes="lens-blue")
             yield Label(self._get_social_indicator(), id="social-glyph")
             yield Label(self._get_initiative_glyph(), id="initiative-glyph")
             yield Label(self._get_context_glyph(), id="context-glyph")
@@ -1236,7 +1236,11 @@ class StatusBar(Static):
         """Update the lens in Truth Strip."""
         self.lens = lens
         try:
-            self.query_one("#lens-glyph", Label).update(self._get_lens_glyph())
+            label = self.query_one("#lens-glyph", Label)
+            label.update(self._get_lens_glyph())
+            # Apply CSS class for color
+            label.remove_class("lens-blue", "lens-red", "lens-purple")
+            label.add_class(f"lens-{lens.lower()}")
         except Exception:
             pass
 
@@ -2269,10 +2273,24 @@ class SovwrenIDE(App):
         width: 100%;
     }
     /* Truth Strip glyphs - fixed width to prevent expansion */
-    #mode-glyph, #strict-glyph, #lens-glyph, #social-glyph, #initiative-glyph, #search-glyph, #council-glyph {
+    #mode-glyph, #strict-glyph, #social-glyph, #initiative-glyph, #search-glyph, #council-glyph {
         width: auto;
         margin-right: 1;
         color: #909090;
+    }
+    /* Lens glyph - colored by CSS class */
+    #lens-glyph {
+        width: auto;
+        margin-right: 1;
+    }
+    #lens-glyph.lens-blue {
+        color: dodgerblue;
+    }
+    #lens-glyph.lens-red {
+        color: red;
+    }
+    #lens-glyph.lens-purple {
+        color: mediumpurple;
     }
     #context-glyph {
         width: auto;
@@ -4942,6 +4960,8 @@ class SovwrenIDE(App):
                     f"[dim]RAG ready: {total_vectors} vectors indexed[/dim]",
                     "system"
                 )
+                # Background reindex to pick up new/changed files (non-blocking)
+                asyncio.create_task(self._background_reindex())
 
             self.rag_initialized = True
 
@@ -4949,6 +4969,31 @@ class SovwrenIDE(App):
             stream.add_message(f"[yellow]RAG initialization skipped: {e}[/yellow]", "system")
             self.rag_retriever = None
             self.rag_initialized = False
+
+    async def _background_reindex(self) -> None:
+        """Background reindex of RAG corpus (runs after startup, non-blocking)."""
+        try:
+            from rag.local_ingester import local_ingester
+
+            # Small delay to let UI finish loading
+            await asyncio.sleep(2)
+
+            # Run the corpus ingestion silently
+            stats = await local_ingester.ingest_sovwren_corpus()
+
+            # Notify user of any new files
+            files_ingested = stats.get('files_ingested', 0)
+            if files_ingested > 0:
+                try:
+                    stream = self.query_one(NeuralStream)
+                    stream.add_message(
+                        f"[dim]Background reindex: {files_ingested} files refreshed[/dim]",
+                        "system"
+                    )
+                except Exception:
+                    pass
+        except Exception:
+            pass  # Silent fail - background task
 
     async def _initialize_search_gate(self) -> None:
         """Initialize Search Gate (Friction Class VI).
@@ -5589,13 +5634,13 @@ class SovwrenIDE(App):
 
             if lens_id == "lens-blue":
                 self.session_lens = "Blue"
-                stream.add_message(f"[dim]{LENS_BLUE} Grounded[/dim]", "system")
+                stream.add_message(f"[dim][dodger_blue1]{LENS_BLUE}[/dodger_blue1] Grounded[/dim]", "system")
             elif lens_id == "lens-red":
                 self.session_lens = "Red"
-                stream.add_message(f"[dim]{LENS_RED} Processing[/dim]", "system")
+                stream.add_message(f"[dim][red1]{LENS_RED}[/red1] Gentle[/dim]", "system")
             elif lens_id == "lens-purple":
                 self.session_lens = "Purple"
-                stream.add_message(f"[dim]{LENS_PURPLE} Symbolic[/dim]", "system")
+                stream.add_message(f"[dim][medium_purple]{LENS_PURPLE}[/medium_purple] Patterned[/dim]", "system")
                 # Ephemeral scaffolding: show one-time hint for first Purple activation
                 from config import get_hint_message
                 hint = get_hint_message("purple_first")

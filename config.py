@@ -47,6 +47,13 @@ MAX_RETRIEVED_CHUNKS = 3  # Reduced from 5 to lighten RAG overhead
 CHUNK_SIZE = 512
 CHUNK_OVERLAP = 50
 
+# External RAG sources (paths outside workspace/ that should be indexed)
+# Each entry is a dict with 'path' and optional 'patterns' (defaults to *.md, *.txt)
+# Example: {"path": "C:/Users/you/OneDrive/Notes", "name": "Obsidian"}
+RAG_EXTERNAL_SOURCES: list[dict] = [
+    {"path": "C:/dev/Obsidian", "name": "Obsidian"},
+]
+
 # Performance settings
 MAX_MEMORY_MB = 2024
 EMBEDDING_BATCH_SIZE = 64

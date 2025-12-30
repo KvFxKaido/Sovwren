@@ -17,6 +17,7 @@ from datetime import datetime
 from .retriever import rag_retriever
 from .vector_store import vector_store
 from core.workspace_paths import find_repo_root
+from config import RAG_EXTERNAL_SOURCES
 
 
 class LocalIngester:
@@ -51,6 +52,8 @@ class LocalIngester:
     def __init__(self, workspace_root: str = None):
         self.workspace_root = Path(workspace_root) if workspace_root else find_repo_root(Path(__file__))
         self.ingested_files: Set[str] = set()
+        self._current_source_root: Path = self.workspace_root  # For external source handling
+        self._current_source_name: str = "workspace"
         self.stats = {
             "files_scanned": 0,
             "files_ingested": 0,
@@ -61,7 +64,11 @@ class LocalIngester:
 
     def _should_exclude(self, file_path: Path) -> bool:
         """Check if file should be excluded."""
-        rel_path = str(file_path.relative_to(self.workspace_root))
+        try:
+            rel_path = str(file_path.relative_to(self._current_source_root))
+        except ValueError:
+            # Path is outside current source root, use filename only
+            rel_path = file_path.name
 
         # Check skip list
         if file_path.name in self.SKIP_FILES:
@@ -80,6 +87,7 @@ class LocalIngester:
         """Extract metadata from file content and path."""
         metadata = {
             "source": "local_file",
+            "source_name": self._current_source_name,
             "file_path": str(file_path),
             "file_name": file_path.name,
             "file_type": file_path.suffix.lower(),
@@ -87,7 +95,10 @@ class LocalIngester:
         }
 
         # Detect document type from path
-        rel_path = str(file_path.relative_to(self.workspace_root)).lower()
+        try:
+            rel_path = str(file_path.relative_to(self._current_source_root)).lower()
+        except ValueError:
+            rel_path = file_path.name.lower()
 
         if "bookmark" in rel_path:
             metadata["doc_type"] = "bookmark"
@@ -153,7 +164,10 @@ class LocalIngester:
             metadata = self._extract_metadata(content, file_path)
 
             # Get relative path for cleaner display
-            rel_path = str(file_path.relative_to(self.workspace_root))
+            try:
+                rel_path = str(file_path.relative_to(self._current_source_root))
+            except ValueError:
+                rel_path = file_path.name
 
             # Ingest into RAG system
             document_id = await rag_retriever.add_document(
@@ -223,7 +237,7 @@ class LocalIngester:
     async def ingest_sovwren_corpus(self) -> Dict:
         """Ingest the full Sovwren symbolic corpus.
 
-        RAG is scoped to the workspace folder to keep context focused.
+        RAG is scoped to the workspace folder plus any configured external sources.
         """
         print("=" * 50)
         print("SOVWREN CORPUS INGESTION")
@@ -232,8 +246,7 @@ class LocalIngester:
         # Define corpus directories with their document types
         # RAG is scoped to workspace folder only
         corpus_dirs = [
-            # Canonical bookmark location is `workspace/bookmarks/` (lowercase).
-            ("workspace/bookmarks", ["**/*.txt", "**/*.md"]),
+            ("workspace", ["**/*.txt", "**/*.md"]),
         ]
 
         total_stats = {
@@ -243,6 +256,10 @@ class LocalIngester:
             "errors": [],
             "by_type": {}
         }
+
+        # Reset to workspace root for internal sources
+        self._current_source_root = self.workspace_root
+        self._current_source_name = "workspace"
 
         for subdir, patterns in corpus_dirs:
             target_dir = self.workspace_root / subdir if subdir != "." else self.workspace_root
@@ -271,6 +288,43 @@ class LocalIngester:
             total_stats["by_type"][subdir] = stats["files_ingested"]
 
             print(f"  Ingested: {stats['files_ingested']} files")
+
+        # Ingest external sources (Obsidian, etc.)
+        for source in RAG_EXTERNAL_SOURCES:
+            source_path = Path(source.get("path", ""))
+            source_name = source.get("name", source_path.name)
+            patterns = source.get("patterns", ["**/*.md", "**/*.txt"])
+
+            if not source_path.exists():
+                print(f"\n  Skipping external source '{source_name}' (path not found: {source_path})")
+                continue
+
+            print(f"\nIngesting external: {source_name}")
+            print(f"  Path: {source_path}")
+            print("-" * 30)
+
+            # Set the source root for this external source
+            self._current_source_root = source_path
+            self._current_source_name = source_name
+
+            stats = await self.ingest_directory(
+                directory=source_path,
+                patterns=patterns,
+                recursive=True
+            )
+
+            # Aggregate stats
+            total_stats["files_scanned"] += stats["files_scanned"]
+            total_stats["files_ingested"] += stats["files_ingested"]
+            total_stats["files_skipped"] += stats["files_skipped"]
+            total_stats["errors"].extend(stats["errors"])
+            total_stats["by_type"][f"external:{source_name}"] = stats["files_ingested"]
+
+            print(f"  Ingested: {stats['files_ingested']} files")
+
+        # Reset source context
+        self._current_source_root = self.workspace_root
+        self._current_source_name = "workspace"
 
         # Save the index to disk
         print("\nSaving index to disk...")

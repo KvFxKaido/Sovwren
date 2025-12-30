@@ -3681,6 +3681,7 @@ class SovwrenIDE(App):
         stream.add_message("[dim]  /monitor           Open Monitor tab[/dim]", "system")
         stream.add_message("[dim]  /editor            Open Editor tab[/dim]", "system")
         stream.add_message("[dim]  /open [...]        Open file/folder/shortcut[/dim]", "system")
+        stream.add_message("[dim]  /screenshot        Export UI as SVG[/dim]", "system")
         stream.add_message("[dim]  /council <query>   Consult cloud model[/dim]", "system")
         stream.add_message("[dim]  /ask-gemini <q>    Ask Gemini (Prototyping)[/dim]", "system")
         stream.add_message("[dim]  /ask-codex <q>     Ask Codex (Constraints)[/dim]", "system")

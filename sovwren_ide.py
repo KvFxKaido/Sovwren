@@ -776,6 +776,77 @@ class SessionPickerModal(Screen):
         self.dismiss({"action": "resume", "session_id": raw})
 
 
+class ExitHygieneModal(Screen):
+    """Exit hygiene: offer to leave a trace before quitting.
+
+    Implements: "Leaving should feel finished, not abrupt."
+    Zero obligation. One click or nothing.
+    """
+
+    CSS = """
+    ExitHygieneModal {
+        align: center middle;
+        background: rgba(0, 0, 0, 0.7);
+    }
+    #exit-dialog {
+        width: 50%;
+        max-width: 60;
+        height: auto;
+        background: #050505;
+        border: thick #1a1a1a;
+        padding: 1 2;
+    }
+    #exit-dialog Label {
+        text-align: center;
+        width: 100%;
+        margin-bottom: 1;
+    }
+    #exit-context {
+        text-align: center;
+        color: #888888;
+        margin-bottom: 1;
+    }
+    #exit-buttons {
+        height: auto;
+        align: center middle;
+        margin-top: 1;
+    }
+    #exit-buttons Button {
+        margin: 0 1;
+    }
+    """
+
+    def __init__(self, context_band: str, exchange_count: int):
+        super().__init__()
+        self.context_band = context_band
+        self.exchange_count = exchange_count
+
+    def compose(self) -> ComposeResult:
+        exchanges = "exchange" if self.exchange_count == 1 else "exchanges"
+        with Container(id="exit-dialog"):
+            yield Label("[b]Leave a trace?[/b]")
+            yield Static(
+                f"[dim]{self.exchange_count} {exchanges} · Context: {self.context_band}[/dim]",
+                id="exit-context"
+            )
+            with Horizontal(id="exit-buttons"):
+                yield Button("Bookmark", id="btn-exit-bookmark", variant="success")
+                yield Button("Just Exit", id="btn-exit-quit", variant="default")
+                yield Button("Stay", id="btn-exit-cancel", variant="error")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-exit-bookmark":
+            self.dismiss({"action": "bookmark"})
+        elif event.button.id == "btn-exit-quit":
+            self.dismiss({"action": "quit"})
+        else:
+            self.dismiss({"action": "cancel"})
+
+    def on_key(self, event) -> None:
+        if event.key == "escape":
+            self.dismiss({"action": "cancel"})
+
+
 class WorkspaceTree(Vertical):
     """Class II: Shared Context Visibility."""
     def compose(self) -> ComposeResult:
@@ -1012,6 +1083,10 @@ class BottomDock(Vertical):
                 with Horizontal(classes="toggle-row"):
                     yield Label(f"{FILE} Auto-load @refs", classes="toggle-label")
                     yield Switch(value=False, id="dock-toggle-auto-load-refs")
+
+                # Shortcuts (populated dynamically from workspace/.shortcuts/)
+                yield Label("[b]Shortcuts[/b]", classes="panel-header")
+                yield Vertical(id="dock-shortcuts-container")
 
     def update_context_display(self, context_text: str):
         """Update the context status in the dock."""
@@ -2456,6 +2531,7 @@ class SovwrenIDE(App):
 
         # Bookmark weaving guard
         self._weaving_bookmark = False
+        self._exit_after_bookmark = False  # Exit hygiene: quit after bookmark saves
 
         # Temporal empathy: track input activity for border dimming
         self._last_input_time = time.time()
@@ -2729,6 +2805,32 @@ class SovwrenIDE(App):
             self._shortcuts.sort(key=lambda s: s["name"].lower())
         except Exception:
             self._shortcuts = []
+        # Refresh the dock UI
+        self._refresh_shortcuts_panel()
+
+    def _refresh_shortcuts_panel(self) -> None:
+        """Refresh the shortcuts panel in the dock Controls tab."""
+        try:
+            container = self.query_one("#dock-shortcuts-container", Vertical)
+            # Clear existing buttons
+            for child in list(container.children):
+                child.remove()
+            # Add shortcut buttons
+            if self._shortcuts:
+                for s in self._shortcuts[:6]:  # Limit to 6 to avoid overflow
+                    btn = Button(
+                        f"{FOLDER} {s['name']}",
+                        id=f"shortcut-{s['name'].lower().replace(' ', '-')}",
+                        classes="shortcut-btn"
+                    )
+                    btn.tooltip = str(s["path"])
+                    container.mount(btn)
+                if len(self._shortcuts) > 6:
+                    container.mount(Static(f"[dim]+{len(self._shortcuts) - 6} more (/open shortcuts)[/dim]"))
+            else:
+                container.mount(Static("[dim]No shortcuts in .shortcuts/[/dim]"))
+        except Exception:
+            pass  # Dock not mounted yet
 
     def _fuzzy_match_shortcut(self, query: str) -> dict | None:
         """Fuzzy match a shortcut by name. Returns best match or None."""
@@ -5570,6 +5672,25 @@ class SovwrenIDE(App):
         elif button_id == "btn-git-push":
             await self._queue_git_confirm("push")
 
+        # Shortcut buttons (dynamically generated)
+        elif button_id.startswith("shortcut-"):
+            await self._launch_shortcut_button(button_id)
+
+    async def _launch_shortcut_button(self, button_id: str) -> None:
+        """Launch a shortcut from the dock button."""
+        # Extract name from button_id: "shortcut-vs-code" -> "vs code"
+        name_slug = button_id.replace("shortcut-", "").replace("-", " ")
+        shortcut = self._fuzzy_match_shortcut(name_slug)
+
+        if shortcut:
+            stream = self.query_one(NeuralStream)
+            try:
+                import subprocess
+                subprocess.Popen(["cmd", "/c", "start", "", str(shortcut["path"])], shell=True)
+                stream.add_message(f"[dim]{FOLDER} Launched: {shortcut['name']}[/dim]", "system")
+            except Exception as e:
+                stream.add_message(f"[red]Failed to launch {shortcut['name']}: {e}[/red]", "error")
+
     def action_open_external(self) -> None:
         """Open the selected file in the system's default editor."""
         import subprocess
@@ -5718,16 +5839,23 @@ Output ONLY valid JSON."""
         # Clear the weaving guard
         self._weaving_bookmark = False
 
+        # Check if we should exit after (from exit hygiene flow)
+        should_exit = self._exit_after_bookmark
+        self._exit_after_bookmark = False  # Reset flag
+
         if not content:
+            # Cancelled - if exit hygiene flow, still exit (they chose to leave)
+            if should_exit:
+                self.exit()
             return
 
         stream = self.query_one(NeuralStream)
-        
+
         try:
             # Generate filename
             timestamp = datetime.now().strftime("%Y-%m-%d")
             filename = f"{timestamp}.md"
-            
+
             # Ensure directory exists (save to workspace/bookmarks/)
             save_dir = workspace_root / "bookmarks"
             save_dir.mkdir(parents=True, exist_ok=True)
@@ -5745,6 +5873,10 @@ Output ONLY valid JSON."""
 
         except Exception as e:
             stream.add_message(f"[red]Failed to save bookmark: {e}[/red]", "error")
+
+        # Exit after bookmark if from exit hygiene flow
+        if should_exit:
+            self.exit()
 
     def on_switch_changed(self, event: Switch.Changed) -> None:
         """Handle switch toggles."""
@@ -6022,6 +6154,54 @@ Output ONLY valid JSON."""
         self._update_context_band()
         # Reset context display
         self._update_last_context_displays("[dim]No context loaded[/dim]")
+
+    def action_quit(self) -> None:
+        """Quit with optional exit hygiene.
+
+        If there's conversation content (1+ exchanges) and context is Medium+,
+        offer to leave a trace. Otherwise, just quit.
+
+        Implements: "Leaving should feel finished, not abrupt."
+        """
+        exchange_count = getattr(self, '_exchange_count', 0)
+        context_band = getattr(self, '_last_context_band', 'Low')
+
+        # Determine if we should offer exit hygiene
+        # Medium+ context AND at least one exchange
+        should_offer = (
+            exchange_count >= 1 and
+            any(level in context_band for level in ["Medium", "High", "Critical"])
+        )
+
+        if should_offer:
+            self.push_screen(
+                ExitHygieneModal(context_band, exchange_count),
+                self._handle_exit_hygiene
+            )
+        else:
+            self.exit()
+
+    def _handle_exit_hygiene(self, result: dict | None) -> None:
+        """Callback for ExitHygieneModal."""
+        if not result:
+            return  # Dismissed, stay
+
+        action = result.get("action")
+
+        if action == "quit":
+            self.exit()
+        elif action == "bookmark":
+            # Initiate bookmark then quit
+            asyncio.create_task(self._bookmark_and_exit())
+        # action == "cancel" means stay, do nothing
+
+    async def _bookmark_and_exit(self) -> None:
+        """Create a quick bookmark, then exit.
+
+        Sets flag so finalize_bookmark_weave knows to exit after save.
+        """
+        self._exit_after_bookmark = True
+        await self.initiate_bookmark_weave()
 
     def action_toggle_social_carryover(self) -> None:
         """Toggle Social Carryover (warm vs neutral stance).
@@ -6369,26 +6549,30 @@ Output ONLY valid JSON."""
             stream = self.query_one(NeuralStream)
 
             if to_idx > from_idx:
-                # Escalation
+                # Escalation — warn, don't scold
                 if to_level == "Critical":
+                    # Actionable, not alarming
                     stream.add_message(
-                        f"[bold red]⚡ Context: {from_level} → {to_level}[/bold red] — Earlier threads may be dropping.",
+                        f"[yellow]● Context: {to_level}[/yellow] — "
+                        f"Consider /clear or bookmark if conversation feels narrow.",
                         "system"
                     )
                 elif to_level == "High":
                     stream.add_message(
-                        f"[yellow]⚡ Context: {from_level} → {to_level}[/yellow] — Responses may narrow.",
+                        f"[dim]◑ Context: {to_level}[/dim] — "
+                        f"Earlier details may get less weight.",
                         "system"
                     )
                 else:
+                    # Low → Medium: quiet transition
                     stream.add_message(
-                        f"[dim]⚡ Context: {from_level} → {to_level}[/dim]",
+                        f"[dim]◔ Context: {to_level}[/dim]",
                         "system"
                     )
             else:
-                # De-escalation (rare but possible after clear)
+                # De-escalation (after /clear) — positive signal
                 stream.add_message(
-                    f"[dim]⚡ Context: {from_level} → {to_level}[/dim]",
+                    f"[dim]○ Context: {to_level}[/dim] — Room to breathe.",
                     "system"
                 )
 

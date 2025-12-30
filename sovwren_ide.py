@@ -1318,6 +1318,7 @@ class ChatInput(TextArea):
         ("/seat", "Switch Council model [model]"),
         ("/confirm-yes", "Approve pending action"),
         ("/confirm-no", "Cancel pending action"),
+        ("/memory", "Memory operations [list|delete <name>]"),
     ]
 
     class Submitted(Message):
@@ -5295,6 +5296,13 @@ class SovwrenIDE(App):
                         self.conversation_history.pop()
                     return  # Don't send memory commands to LLM
 
+                # /memory command family
+                if msg_lower.startswith('/memory'):
+                    await self._handle_memory_command(message)
+                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
+                        self.conversation_history.pop()
+                    return
+
                 # Check if this is a /council command
                 elif msg_lower.startswith('/council'):
                     await self._handle_council_command(message)
@@ -6707,6 +6715,87 @@ Output ONLY valid JSON."""
                 memory_widget.update("No memories stored")
         except Exception:
             pass
+
+    async def _handle_memory_command(self, message: str) -> None:
+        """Handle /memory command family."""
+        stream = self.query_one(NeuralStream)
+        parts = message.split(maxsplit=2)
+
+        if len(parts) == 1:
+            # Just /memory - show help
+            stream.add_message("[b]Memory Commands:[/b]", "system")
+            stream.add_message("  /memory list         - Show all memories", "system")
+            stream.add_message("  /memory delete <name> - Delete a memory", "system")
+            stream.add_message("  remember: <content>  - Store a memory", "system")
+            return
+
+        subcommand = parts[1].lower()
+
+        if subcommand == "list":
+            memories = await self.read_memories_direct()
+            if not memories:
+                stream.add_message("[dim]No memories stored.[/dim]", "system")
+                return
+            stream.add_message(f"[b]Memories ({len(memories)}):[/b]", "system")
+            for m in memories:
+                name = m.get('name', 'unknown')
+                entity_type = m.get('type', 'unknown')
+                obs_count = len(m.get('observations', []))
+                updated = m.get('updated', m.get('created', ''))[:10]
+                stream.add_message(
+                    f"  • [cyan]{name}[/cyan] ({entity_type}) — {obs_count} obs — {updated}",
+                    "system"
+                )
+
+        elif subcommand == "delete":
+            if len(parts) < 3:
+                stream.add_message("[yellow]Usage: /memory delete <name>[/yellow]", "system")
+                return
+            target_name = parts[2]
+            success = await self._delete_memory(target_name)
+            if success:
+                stream.add_message(f"[green]✓ Deleted memory: {target_name}[/green]", "system")
+                await self._refresh_memory_display()
+            else:
+                stream.add_message(f"[red]✗ Memory not found: {target_name}[/red]", "error")
+
+        else:
+            stream.add_message(f"[yellow]Unknown subcommand: {subcommand}[/yellow]", "system")
+            stream.add_message("[dim]Try: /memory list, /memory delete <name>[/dim]", "system")
+
+    async def _delete_memory(self, entity_name: str) -> bool:
+        """Delete a memory entity by name."""
+        try:
+            import json
+
+            if not self.MEMORY_FILE.exists():
+                return False
+
+            with open(self.MEMORY_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            entities = data.get('entities', [])
+            original_count = len(entities)
+
+            # Filter out the matching entity (case-insensitive)
+            data['entities'] = [
+                e for e in entities
+                if e.get('name', '').lower() != entity_name.lower()
+            ]
+
+            if len(data['entities']) == original_count:
+                return False  # Nothing was deleted
+
+            # Write back
+            with open(self.MEMORY_FILE, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+
+            return True
+
+        except Exception as e:
+            stream = self.query_one(NeuralStream)
+            stream.add_message(f"[red]Memory delete error: {e}[/red]", "error")
+            return False
 
     # ==================== GIT OPERATIONS ====================
 

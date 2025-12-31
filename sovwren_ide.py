@@ -11,7 +11,7 @@ Usage:
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Header, Footer, Static, Input, Button, DirectoryTree, Label, Switch, TextArea, TabbedContent, TabPane, Collapsible, OptionList
+from textual.widgets import Header, Footer, Static, Input, Button, DirectoryTree, Label, Switch, TextArea, TabbedContent, TabPane, Collapsible, OptionList, Select
 from textual.screen import Screen
 from textual.reactive import reactive
 from textual.binding import Binding
@@ -1032,6 +1032,10 @@ class BottomDock(Vertical):
                 yield Static("", id="dock-memory-status")
              
             with TabPane(f"{GEAR} Controls", id="dock-controls"):
+                # Model selector
+                yield Label("[b]Model[/b]", classes="panel-header")
+                yield Select([], id="dock-model-select", prompt="No models loaded", allow_blank=True)
+
                 # Mode buttons (essential)
                 yield Label("[b]Mode[/b]", classes="panel-header")
                 with Horizontal(classes="button-row"):
@@ -1951,6 +1955,10 @@ class SovwrenIDE(App):
     #bottom-dock Tab { background: #0a0a0a; color: #606060; padding: 0 2; }
     #bottom-dock Tab.-active { background: #1a1a1a; color: #a0a0a0; }
     #bottom-dock TabPane { padding: 1; }
+    #dock-model-select {
+        width: 100%;
+        margin-bottom: 1;
+    }
 
     /* Dock Editor */
     #dock-editor-toolbar {
@@ -4123,6 +4131,12 @@ class SovwrenIDE(App):
                         # Update context window estimate
                         ctx_window = self._get_model_context_window(new_model)
                         stream.add_message(f"[dim]Context window: ~{ctx_window:,} tokens[/dim]", "system")
+                        # Sync dock model selector
+                        try:
+                            select = self.query_one("#dock-model-select", Select)
+                            select.value = new_model
+                        except Exception:
+                            pass
                         # Persist model choice for next startup
                         if self.db:
                             try:
@@ -4133,6 +4147,58 @@ class SovwrenIDE(App):
                         stream.add_message(f"[red]Failed to switch to {model_name}[/red]", "error")
                 except Exception as e:
                     stream.add_message(f"[red]Switch error: {e}[/red]", "error")
+
+    async def _populate_model_select(self, models: list[str], current_model: str = None) -> None:
+        """Populate the dock model selector with available models."""
+        try:
+            select = self.query_one("#dock-model-select", Select)
+            # Create options as (display_name, value) tuples
+            options = [(m, m) for m in models]
+            select.set_options(options)
+            # Set current selection
+            if current_model and current_model in models:
+                select.value = current_model
+        except Exception:
+            pass  # Dock may not be visible
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Handle Select widget changes."""
+        if event.select.id == "dock-model-select":
+            if event.value is None or event.value == Select.BLANK:
+                return
+            # Don't switch if already on this model
+            if self.llm_client and getattr(self.llm_client, 'current_model', None) == event.value:
+                return
+            asyncio.create_task(self._switch_model_from_dock(str(event.value)))
+
+    async def _switch_model_from_dock(self, model_name: str) -> None:
+        """Switch model from dock selector."""
+        if not self.llm_client:
+            return
+
+        stream = self.query_one(NeuralStream)
+        status = self.query_one(StatusBar)
+
+        stream.add_message(f"[dim]Switching to {model_name}...[/dim]", "system")
+        try:
+            success = await self.llm_client.switch_model(model_name)
+            if success:
+                new_model = self.llm_client.current_model
+                status.update_status(True, new_model)
+                stream.add_message(f"[green]Switched to {new_model}[/green]", "system")
+                # Update context window estimate
+                ctx_window = self._get_model_context_window(new_model)
+                stream.add_message(f"[dim]Context window: ~{ctx_window:,} tokens[/dim]", "system")
+                # Persist model choice
+                if self.db:
+                    try:
+                        await self.db.set_preference(self.PREF_LAST_MODEL_KEY, new_model)
+                    except Exception:
+                        pass
+            else:
+                stream.add_message(f"[red]Failed to switch to {model_name}[/red]", "error")
+        except Exception as e:
+            stream.add_message(f"[red]Switch error: {e}[/red]", "error")
 
     async def _switch_backend(self, backend: str) -> None:
         """Switch between LM Studio and Ollama backends."""
@@ -4892,6 +4958,9 @@ class SovwrenIDE(App):
                     stream.add_message(f"[green]Connected to LM Studio[/green]", "system")
                     stream.add_message(f"[dim]Model: {model_name}[/dim]", "system")
                     stream.add_message(f"[dim]Available: {', '.join(models[:3])}{'...' if len(models) > 3 else ''}[/dim]", "system")
+
+                    # Populate dock model selector
+                    await self._populate_model_select(models, model_name)
                     stream.add_message("", "system")
                     stream.add_message("[b]Ready for partnership.[/b]", "node")
                 else:

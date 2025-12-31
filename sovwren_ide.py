@@ -887,18 +887,6 @@ class ProtocolDeck(Vertical):
                 yield Label("Hard Stop", classes="toggle-label")
                 yield Switch(value=False, id="toggle-mode-strictness")
 
-            yield Label("[b]Lens[/b]", classes="panel-header")
-            with Horizontal(classes="button-row"):
-                blue_btn = Button(f"[dodger_blue1]{LENS_BLUE}[/dodger_blue1]", id="lens-blue", classes="lens-btn active")
-                blue_btn.tooltip = "Blue - Grounded"
-                yield blue_btn
-                red_btn = Button(f"[red1]{LENS_RED}[/red1]", id="lens-red", classes="lens-btn")
-                red_btn.tooltip = "Red - Gentle"
-                yield red_btn
-                purple_btn = Button(f"[medium_purple]{LENS_PURPLE}[/medium_purple]", id="lens-purple", classes="lens-btn")
-                purple_btn.tooltip = "Purple - Patterned"
-                yield purple_btn
-
             yield Label("[b]Initiative[/b]", classes="panel-header panel-header-spaced")
             with Horizontal(classes="button-row"):
                 init_btn = Button("Init: N", id="btn-initiative-cycle", classes="action-btn")
@@ -1055,13 +1043,6 @@ class BottomDock(Vertical):
                     yield Label(CLOUD, classes="toggle-label")
                     yield Switch(value=False, id="dock-toggle-council-gate")
                 
-                # Lens
-                yield Label("[b]Lens[/b]", classes="panel-header")
-                with Horizontal(classes="button-row"):
-                    yield Button(f"[dodger_blue1]{LENS_BLUE}[/dodger_blue1]", id="dock-lens-blue", classes="lens-btn active")
-                    yield Button(f"[red1]{LENS_RED}[/red1]", id="dock-lens-red", classes="lens-btn")
-                    yield Button(f"[medium_purple]{LENS_PURPLE}[/medium_purple]", id="dock-lens-purple", classes="lens-btn")
-
                 # Initiative
                 yield Label("[b]Initiative[/b]", classes="panel-header")
                 with Horizontal(classes="button-row"):
@@ -1313,6 +1294,7 @@ class ChatInput(TextArea):
         ("/bookmark", "Save bookmark [name]"),
         ("/session", "Session info"),
         ("/context", "Context info"),
+        ("/lens", "Lens control [red|default]"),
         ("/models", "Open model picker"),
         ("/profiles", "Open profile picker"),
         ("/monitor", "Open Monitor tab"),
@@ -2451,7 +2433,7 @@ class SovwrenIDE(App):
     PREF_LAST_MODEL_KEY = "last_model"  # Preference key for model persistence
     PREF_INITIATIVE_DEFAULT_KEY = "initiative_default"  # Preference key for initiative default (Low/Normal/High)
     PREF_LAST_MODE_KEY = "last_mode"  # Preference key for mode persistence (Workshop/Sanctuary)
-    PREF_LAST_LENS_KEY = "last_lens"  # Preference key for lens persistence (Blue/Red/Purple)
+    # Lens is now derived from mode (Blue=Workshop, Purple=Sanctuary) with Red as explicit override
     PREF_SHOW_TIMESTAMPS_KEY = "show_timestamps"  # Preference key for timestamp visibility (default: True)
     PREF_AUTO_LOAD_REFS_KEY = "auto_load_refs"  # Preference key for auto-loading @refs (default: False)
     PREF_MODE_STRICTNESS_KEY = "mode_strictness"  # Preference key for mode strictness ("gravity" or "hard_stop")
@@ -2511,7 +2493,7 @@ class SovwrenIDE(App):
         self.current_profile_name = "sovwren"  # Profile key string
         self.assistant_display_name = os.environ.get("SOVWREN_ASSISTANT_NAME", "Sovwren")
         self.session_mode = "Workshop"
-        self.session_lens = "Blue"
+        self.red_override = False  # Red lens override (explicit via /lens red)
         self.idle_mode = False
         self.rag_debug_enabled = False  # RAG Debug Mode toggle
         self.show_timestamps = True     # Message timestamps (default ON - orientation beats vibes)
@@ -2594,6 +2576,13 @@ class SovwrenIDE(App):
 
         # Shortcuts: scanned from workspace/.shortcuts/*.lnk
         self._shortcuts: list[dict] = []  # [{"name": "VS Code", "path": Path(...)}, ...]
+
+    @property
+    def session_lens(self) -> str:
+        """Derive lens from mode (Blue=Workshop, Purple=Sanctuary) unless Red override active."""
+        if self.red_override:
+            return "Red"
+        return "Blue" if self.session_mode == "Workshop" else "Purple"
 
     def _update_last_context_displays(self, text: str) -> None:
         """Update both sidebar and Tall-layout dock context panels."""
@@ -2723,13 +2712,8 @@ class SovwrenIDE(App):
             except Exception:
                 pass
 
-            # Load last lens (Blue/Red/Purple)
-            try:
-                saved_lens = await self.db.get_preference(self.PREF_LAST_LENS_KEY, default=None)
-                if saved_lens in ("Blue", "Red", "Purple"):
-                    self.session_lens = saved_lens
-            except Exception:
-                pass
+            # Lens is now derived from mode (Blue=Workshop, Purple=Sanctuary)
+            # Red override available via /lens red command
 
             # Load timestamp preference (default ON)
             try:
@@ -2757,9 +2741,9 @@ class SovwrenIDE(App):
             except Exception:
                 pass
 
-        # Apply restored mode to UI (class + buttons)
+        # Apply restored mode to UI (class + buttons, lens derived from mode)
         self._apply_mode_to_ui(self.session_mode)
-        self._apply_lens_to_ui(self.session_lens)
+        self._apply_lens_to_ui()
 
         # Apply restored timestamp preference to toggles
         try:
@@ -3149,26 +3133,10 @@ class SovwrenIDE(App):
         except Exception:
             pass
 
-    def _apply_lens_to_ui(self, lens: str) -> None:
-        """Apply lens state to UI (buttons + Truth Strip)."""
-        lens_map = {"Blue": "lens-blue", "Red": "lens-red", "Purple": "lens-purple"}
-        target_id = lens_map.get(lens, "lens-blue")
-
-        # Update button active states
-        for btn_id in ("lens-blue", "lens-red", "lens-purple", "dock-lens-blue", "dock-lens-red", "dock-lens-purple"):
-            try:
-                btn = self.query_one(f"#{btn_id}", Button)
-                base_id = btn_id.replace("dock-", "")
-                if base_id == target_id:
-                    btn.add_class("active")
-                else:
-                    btn.remove_class("active")
-            except Exception:
-                pass
-
-        # Update Truth Strip
+    def _apply_lens_to_ui(self) -> None:
+        """Apply derived lens state to Truth Strip (lens is now derived from mode)."""
         try:
-            self.query_one(StatusBar).update_lens(lens)
+            self.query_one(StatusBar).update_lens(self.session_lens)
         except Exception:
             pass
 
@@ -3805,6 +3773,8 @@ class SovwrenIDE(App):
         stream.add_message("[dim]  /bookmark [name]   Save bookmark[/dim]", "system")
         stream.add_message("[dim]  /session           Session info[/dim]", "system")
         stream.add_message("[dim]  /context           Context info[/dim]", "system")
+        stream.add_message("[dim]  /lens [red|default] Red override toggle[/dim]", "system")
+        stream.add_message("[dim]  /memory [...]      Memory operations[/dim]", "system")
         stream.add_message("[dim]  /models            Open model picker[/dim]", "system")
         stream.add_message("[dim]  /profiles          Open profile picker[/dim]", "system")
         stream.add_message("[dim]  /monitor           Open Monitor tab[/dim]", "system")
@@ -5362,6 +5332,44 @@ class SovwrenIDE(App):
                         self.conversation_history.pop()
                     return
 
+                # /lens command - Red override toggle
+                if msg_lower.startswith("/lens"):
+                    parts = message.strip().split(maxsplit=1)
+                    arg = parts[1].lower() if len(parts) > 1 else ""
+
+                    if arg == "red":
+                        self.red_override = True
+                        self._apply_lens_to_ui()
+                        stream.add_message(f"[dim][red1]{LENS_RED}[/red1] Red override active — reduced verbosity[/dim]", "system")
+                    elif arg in ("default", "reset", ""):
+                        if arg == "":
+                            # Just /lens - show current state
+                            current = self.session_lens
+                            mode_default = "Blue" if self.session_mode == "Workshop" else "Purple"
+                            if self.red_override:
+                                stream.add_message(f"[dim]Lens: [red1]{LENS_RED}[/red1] Red (override active)[/dim]", "system")
+                                stream.add_message(f"[dim]  /lens default — return to {mode_default}[/dim]", "system")
+                            else:
+                                glyph = LENS_BLUE if current == "Blue" else LENS_PURPLE
+                                color = "dodger_blue1" if current == "Blue" else "medium_purple"
+                                stream.add_message(f"[dim]Lens: [{color}]{glyph}[/{color}] {current} (from {self.session_mode})[/dim]", "system")
+                                stream.add_message(f"[dim]  /lens red — reduce verbosity and initiative[/dim]", "system")
+                        else:
+                            # /lens default or /lens reset
+                            self.red_override = False
+                            self._apply_lens_to_ui()
+                            mode_default = "Blue" if self.session_mode == "Workshop" else "Purple"
+                            glyph = LENS_BLUE if mode_default == "Blue" else LENS_PURPLE
+                            color = "dodger_blue1" if mode_default == "Blue" else "medium_purple"
+                            stream.add_message(f"[dim][{color}]{glyph}[/{color}] Lens reset to {mode_default}[/dim]", "system")
+                    else:
+                        stream.add_message(f"[yellow]Unknown lens: {arg}[/yellow]", "system")
+                        stream.add_message("[dim]Try: /lens red, /lens default[/dim]", "system")
+
+                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
+                        self.conversation_history.pop()
+                    return
+
                 # /open command family - file/folder/shortcut launching
                 if msg_lower.startswith("/open"):
                     await self._handle_open_command(message)
@@ -5674,62 +5682,8 @@ class SovwrenIDE(App):
             await self.action_set_initiative_default()
             return
 
-        # Lens buttons
-        if button_id in (
-            "lens-blue",
-            "lens-red",
-            "lens-purple",
-            "dock-lens-blue",
-            "dock-lens-red",
-            "dock-lens-purple",
-        ):
-            # Remove active from all lens buttons (both main + dock), add to clicked one
-            for btn_id in (
-                "lens-blue",
-                "lens-red",
-                "lens-purple",
-                "dock-lens-blue",
-                "dock-lens-red",
-                "dock-lens-purple",
-            ):
-                try:
-                    btn = self.query_one(f"#{btn_id}", Button)
-                    btn.remove_class("active")
-                except Exception:
-                    pass
-            event.button.add_class("active")
-
-            lens_id = button_id.replace("dock-", "")
-
-            if lens_id == "lens-blue":
-                self.session_lens = "Blue"
-                stream.add_message(f"[dim][dodger_blue1]{LENS_BLUE}[/dodger_blue1] Grounded[/dim]", "system")
-            elif lens_id == "lens-red":
-                self.session_lens = "Red"
-                stream.add_message(f"[dim][red1]{LENS_RED}[/red1] Gentle[/dim]", "system")
-            elif lens_id == "lens-purple":
-                self.session_lens = "Purple"
-                stream.add_message(f"[dim][medium_purple]{LENS_PURPLE}[/medium_purple] Patterned[/dim]", "system")
-                # Ephemeral scaffolding: show one-time hint for first Purple activation
-                from config import get_hint_message
-                hint = get_hint_message("purple_first")
-                if hint:
-                    stream.add_message(f"    ↳ {hint}", "hint")
-
-            # Keep the other set visually in sync
-            try:
-                counterpart_id = f"dock-{lens_id}" if not button_id.startswith("dock-") else lens_id
-                self.query_one(f"#{counterpart_id}", Button).add_class("active")
-            except Exception:
-                pass
-            # Update Truth Strip
-            self.query_one(StatusBar).update_lens(self.session_lens)
-            # Persist lens preference
-            if self.db:
-                asyncio.create_task(self.db.set_preference(self.PREF_LAST_LENS_KEY, self.session_lens))
-
         # Mode buttons
-        elif button_id in ("mode-workshop", "mode-sanctuary", "dock-mode-workshop", "dock-mode-sanctuary"):
+        if button_id in ("mode-workshop", "mode-sanctuary", "dock-mode-workshop", "dock-mode-sanctuary"):
             # Remove active from all mode buttons (both main + dock), add to clicked one
             for btn_id in ("mode-workshop", "mode-sanctuary", "dock-mode-workshop", "dock-mode-sanctuary"):
                 try:
@@ -5765,6 +5719,9 @@ class SovwrenIDE(App):
                 pass
             # Update Truth Strip
             self.query_one(StatusBar).update_mode(self.session_mode)
+            # Mode change clears Red override (posture shift resets lens to mode default)
+            self.red_override = False
+            self._apply_lens_to_ui()
             self._apply_initiative_mode_defaults()
             # Persist mode preference
             if self.db:

@@ -2774,18 +2774,7 @@ class SovwrenIDE(App):
 
         # Apply restored mode strictness preference to toggles + status bar
         strict_value = self.mode_strictness == "hard_stop"
-        self._syncing_switches = True
-        try:
-            try:
-                self.query_one("#toggle-mode-strictness", Switch).value = strict_value
-            except Exception:
-                pass
-            try:
-                self.query_one("#dock-toggle-mode-strictness", Switch).value = strict_value
-            except Exception:
-                pass
-        finally:
-            self._syncing_switches = False
+        self._sync_switches("mode-strictness", strict_value)
         try:
             self.query_one(StatusBar).update_mode_strictness(self.mode_strictness)
         except Exception:
@@ -4569,6 +4558,26 @@ class SovwrenIDE(App):
 
     # --- Command Handler Methods (for command registry) ---
 
+    def _sync_switches(self, switch_name: str, value: bool) -> None:
+        """Sync main and dock switches to the same value.
+
+        Args:
+            switch_name: The switch name without prefix (e.g., "idleness", "timestamps")
+            value: The value to set on both switches
+        """
+        self._syncing_switches = True
+        try:
+            try:
+                self.query_one(f"#toggle-{switch_name}", Switch).value = value
+            except Exception:
+                pass
+            try:
+                self.query_one(f"#dock-toggle-{switch_name}", Switch).value = value
+            except Exception:
+                pass
+        finally:
+            self._syncing_switches = False
+
     def _cmd_save(self, stream) -> None:
         """Handle /save command."""
         self.action_save_file()
@@ -5939,17 +5948,7 @@ Output ONLY valid JSON."""
 
         if event.switch.id in ("toggle-idleness", "dock-toggle-idleness"):
             self.idle_mode = event.value
-            # Sync both switches
-            self._syncing_switches = True
-            try:
-                self.query_one("#toggle-idleness", Switch).value = event.value
-            except Exception:
-                pass
-            try:
-                self.query_one("#dock-toggle-idleness", Switch).value = event.value
-            except Exception:
-                pass
-            self._syncing_switches = False
+            self._sync_switches("idleness", event.value)
             stream = self.query_one(NeuralStream)
 
             # Get mode buttons for visual suspension
@@ -6021,17 +6020,7 @@ Output ONLY valid JSON."""
 
         elif event.switch.id in ("toggle-mode-strictness", "dock-toggle-mode-strictness"):
             self.mode_strictness = "hard_stop" if event.value else "gravity"
-            # Sync both switches
-            self._syncing_switches = True
-            try:
-                self.query_one("#toggle-mode-strictness", Switch).value = event.value
-            except Exception:
-                pass
-            try:
-                self.query_one("#dock-toggle-mode-strictness", Switch).value = event.value
-            except Exception:
-                pass
-            self._syncing_switches = False
+            self._sync_switches("mode-strictness", event.value)
 
             # Persist preference
             if self.db:
@@ -6050,34 +6039,14 @@ Output ONLY valid JSON."""
 
         elif event.switch.id in ("toggle-timestamps", "dock-toggle-timestamps"):
             self.show_timestamps = event.value
-            # Sync both switches
-            self._syncing_switches = True
-            try:
-                self.query_one("#toggle-timestamps", Switch).value = event.value
-            except Exception:
-                pass
-            try:
-                self.query_one("#dock-toggle-timestamps", Switch).value = event.value
-            except Exception:
-                pass
-            self._syncing_switches = False
+            self._sync_switches("timestamps", event.value)
             # Persist preference
             if self.db:
                 asyncio.create_task(self.db.set_preference(self.PREF_SHOW_TIMESTAMPS_KEY, str(event.value).lower()))
 
         elif event.switch.id in ("toggle-auto-load-refs", "dock-toggle-auto-load-refs"):
             self.auto_load_refs = event.value
-            # Sync both switches
-            self._syncing_switches = True
-            try:
-                self.query_one("#toggle-auto-load-refs", Switch).value = event.value
-            except Exception:
-                pass
-            try:
-                self.query_one("#dock-toggle-auto-load-refs", Switch).value = event.value
-            except Exception:
-                pass
-            self._syncing_switches = False
+            self._sync_switches("auto-load-refs", event.value)
             # Persist preference
             if self.db:
                 asyncio.create_task(self.db.set_preference(self.PREF_AUTO_LOAD_REFS_KEY, str(event.value).lower()))
@@ -6093,20 +6062,7 @@ Output ONLY valid JSON."""
             if self.search_manager is None:
                 stream = self.query_one(NeuralStream)
                 stream.add_message("[yellow]Search Gate not available[/yellow]", "system")
-                # Reset both switches to off
-                self._syncing_switches = True
-                try:
-                    event.switch.value = False
-                    try:
-                        self.query_one("#toggle-search-gate", Switch).value = False
-                    except Exception:
-                        pass
-                    try:
-                        self.query_one("#dock-toggle-search-gate", Switch).value = False
-                    except Exception:
-                        pass
-                finally:
-                    self._syncing_switches = False
+                self._sync_switches("search-gate", False)
                 return
 
             stream = self.query_one(NeuralStream)
@@ -6127,38 +6083,14 @@ Output ONLY valid JSON."""
             status_bar.update_search_gate(self.search_manager.state.status_text())
 
             # Keep both switches visually in sync
-            self._syncing_switches = True
-            try:
-                try:
-                    self.query_one("#toggle-search-gate", Switch).value = self.search_gate_enabled
-                except Exception:
-                    pass
-                try:
-                    self.query_one("#dock-toggle-search-gate", Switch).value = self.search_gate_enabled
-                except Exception:
-                    pass
-            finally:
-                self._syncing_switches = False
+            self._sync_switches("search-gate", self.search_gate_enabled)
 
         elif event.switch.id in ("toggle-council-gate", "dock-toggle-council-gate"):
             # Friction Class VI extension: Council Gate consent toggle
             if self.council_client is None:
                 stream = self.query_one(NeuralStream)
                 stream.add_message("[yellow]Council Gate not available (no API key)[/yellow]", "system")
-                # Reset both switches to off
-                self._syncing_switches = True
-                try:
-                    event.switch.value = False
-                    try:
-                        self.query_one("#toggle-council-gate", Switch).value = False
-                    except Exception:
-                        pass
-                    try:
-                        self.query_one("#dock-toggle-council-gate", Switch).value = False
-                    except Exception:
-                        pass
-                finally:
-                    self._syncing_switches = False
+                self._sync_switches("council-gate", False)
                 return
 
             stream = self.query_one(NeuralStream)
@@ -6176,18 +6108,7 @@ Output ONLY valid JSON."""
                 stream.add_message(f"[dim]{CLOUD} Council Gate closed (local-only)[/dim]", "system")
 
             # Keep both switches visually in sync
-            self._syncing_switches = True
-            try:
-                try:
-                    self.query_one("#toggle-council-gate", Switch).value = self.council_gate_enabled
-                except Exception:
-                    pass
-                try:
-                    self.query_one("#dock-toggle-council-gate", Switch).value = self.council_gate_enabled
-                except Exception:
-                    pass
-            finally:
-                self._syncing_switches = False
+            self._sync_switches("council-gate", self.council_gate_enabled)
 
     def action_clear_chat(self) -> None:
         """Clear the chat stream and conversation history."""

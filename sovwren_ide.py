@@ -1020,57 +1020,37 @@ class BottomDock(Vertical):
                 yield Static("", id="dock-memory-status")
              
             with TabPane(f"{GEAR} Controls", id="dock-controls"):
-                # Model selector
-                yield Label("[b]Model[/b]", classes="panel-header")
+                # Model selector (no label needed)
                 yield Select([], id="dock-model-select", prompt="No models loaded", allow_blank=True)
 
-                # Mode buttons (essential)
-                yield Label("[b]Mode[/b]", classes="panel-header")
-                with Horizontal(classes="button-row"):
+                # Mode + Strictness
+                with Horizontal(classes="control-row"):
                     yield Button(f"{WRENCH} Workshop", id="dock-mode-workshop", classes="mode-btn active")
                     yield Button(f"{MOON} Sanctuary", id="dock-mode-sanctuary", classes="mode-btn")
-
-                yield Label("[b]Mode Strictness[/b]", classes="panel-header")
-                with Horizontal(classes="toggle-row"):
-                    yield Label("Hard Stop", classes="toggle-label")
+                    yield Label("Hard Stop", classes="toggle-label-inline")
                     yield Switch(value=False, id="dock-toggle-mode-strictness")
-                
-                # Gates (essential)
-                yield Label("[b]Gates[/b]", classes="panel-header")
-                with Horizontal(classes="toggle-row"):
-                    yield Label(GLOBE, classes="toggle-label")
-                    yield Switch(value=False, id="dock-toggle-search-gate")
-                    yield Label(CLOUD, classes="toggle-label")
-                    yield Switch(value=False, id="dock-toggle-council-gate")
-                
-                # Initiative
-                yield Label("[b]Initiative[/b]", classes="panel-header")
-                with Horizontal(classes="button-row"):
-                    yield Button("Init: N", id="dock-btn-initiative-cycle", classes="action-btn")
-                    yield Button("★ Default", id="dock-btn-initiative-default", classes="action-btn")
 
-                # Presence
-                yield Label("[b]Presence[/b]", classes="panel-header")
-                with Horizontal(classes="toggle-row"):
-                    yield Label(f"{MOON} Idle", classes="toggle-label")
+                # Gates + Idle
+                with Horizontal(classes="control-row"):
+                    yield Label(GLOBE, classes="toggle-label-compact")
+                    yield Switch(value=False, id="dock-toggle-search-gate")
+                    yield Label(CLOUD, classes="toggle-label-compact")
+                    yield Switch(value=False, id="dock-toggle-council-gate")
+                    yield Label(f"{MOON}", classes="toggle-label-compact")
                     yield Switch(value=False, id="dock-toggle-idleness")
 
-                # Actions
-                yield Label("[b]Actions[/b]", classes="panel-header")
-                with Horizontal(classes="button-row"):
-                    yield Button(f"{BOOKMARK} Bookmark", id="dock-bookmark-btn")
-
-                # Display
-                yield Label("[b]Display[/b]", classes="panel-header")
-                with Horizontal(classes="toggle-row"):
-                    yield Label(f"{CLOCK} Timestamps", classes="toggle-label")
+                # Initiative + Display + Bookmark
+                with Horizontal(classes="control-row"):
+                    yield Button("Init: N", id="dock-btn-initiative-cycle", classes="action-btn-compact")
+                    yield Button("★", id="dock-btn-initiative-default", classes="action-btn-compact")
+                    yield Label(CLOCK, classes="toggle-label-compact")
                     yield Switch(value=True, id="dock-toggle-timestamps")
-                with Horizontal(classes="toggle-row"):
-                    yield Label(f"{FILE} Auto-load @refs", classes="toggle-label")
+                    yield Label(FILE, classes="toggle-label-compact")
                     yield Switch(value=False, id="dock-toggle-auto-load-refs")
+                    yield Button(f"{BOOKMARK}", id="dock-bookmark-btn", classes="action-btn-compact")
 
-                # Shortcuts (populated dynamically from workspace/.shortcuts/)
-                yield Label("[b]Shortcuts[/b]", classes="panel-header")
+                # Shortcuts
+                yield Label("[dim]Shortcuts[/dim]", classes="panel-header-subtle")
                 yield Vertical(id="dock-shortcuts-container")
 
     def update_context_display(self, context_text: str):
@@ -2068,6 +2048,33 @@ class SovwrenIDE(App):
     .toggle-label {
         margin-right: 1;
         color: #808080;
+    }
+
+    /* Compact control row layout */
+    .control-row {
+        height: auto;
+        align: left middle;
+        padding: 0;
+        margin-bottom: 1;
+    }
+    .toggle-label-inline {
+        margin-left: 2;
+        margin-right: 1;
+        color: #606060;
+    }
+    .toggle-label-compact {
+        margin-right: 0;
+        margin-left: 1;
+        color: #808080;
+        width: auto;
+    }
+    .action-btn-compact {
+        min-width: 6;
+        margin-right: 1;
+    }
+    .panel-header-subtle {
+        margin-top: 1;
+        color: #606060;
     }
 
     /* Switch widgets (toggles) - AMOLED styling */
@@ -4560,6 +4567,146 @@ class SovwrenIDE(App):
         except Exception as e:
             stream.add_message(f"[red]Screenshot failed: {e}[/red]", "error")
 
+    # --- Command Handler Methods (for command registry) ---
+
+    def _cmd_save(self, stream) -> None:
+        """Handle /save command."""
+        self.action_save_file()
+        stream.add_message("[dim]File saved.[/dim]", "system")
+
+    def _cmd_monitor(self, stream) -> None:
+        """Handle /monitor command - focus dock Monitor tab."""
+        self.add_class("dock-visible")
+        try:
+            dock_tabs = self.query_one("#dock-tabs", TabbedContent)
+            dock_tabs.active = "dock-monitor"
+            stream.add_message("[dim]Monitor opened.[/dim]", "system")
+        except Exception:
+            stream.add_message("[yellow]Dock not available.[/yellow]", "system")
+
+    def _cmd_editor(self, stream) -> None:
+        """Handle /editor command - focus dock Editor tab."""
+        self.add_class("dock-visible")
+        try:
+            dock_tabs = self.query_one("#dock-tabs", TabbedContent)
+            dock_tabs.active = "dock-editor"
+            stream.add_message("[dim]Editor opened.[/dim]", "system")
+        except Exception:
+            stream.add_message("[yellow]Dock not available.[/yellow]", "system")
+
+    def _cmd_session(self, stream) -> None:
+        """Handle /session command - show session info."""
+        session_name = self.session_name or "Unnamed"
+        session_id = self.session_id or "None"
+        exchanges = self._exchange_count if hasattr(self, '_exchange_count') else 0
+        stream.add_message(f"[dim]Session: {session_name}[/dim]", "system")
+        stream.add_message(f"[dim]ID: {session_id[:8]}... | Exchanges: {exchanges}[/dim]", "system")
+
+    def _cmd_context(self, stream) -> None:
+        """Handle /context command - show context info."""
+        history_turns = len(self.conversation_history)
+        band = self._context_band if hasattr(self, '_context_band') else "unknown"
+        rag_chunks = len(self.rag_chunks_loaded) if hasattr(self, 'rag_chunks_loaded') else 0
+        stream.add_message(f"[dim]Context band: {band}[/dim]", "system")
+        stream.add_message(f"[dim]History: {history_turns} turns | RAG chunks: {rag_chunks}[/dim]", "system")
+
+    def _cmd_lens(self, message: str, stream) -> None:
+        """Handle /lens command - Red override toggle."""
+        parts = message.strip().split(maxsplit=1)
+        arg = parts[1].lower() if len(parts) > 1 else ""
+
+        if arg == "red":
+            self.red_override = True
+            self._apply_lens_to_ui()
+            stream.add_message(f"[dim][red1]{LENS_RED}[/red1] Red override active — reduced verbosity[/dim]", "system")
+        elif arg in ("default", "reset", ""):
+            if arg == "":
+                # Just /lens - show current state
+                current = self.session_lens
+                mode_default = "Blue" if self.session_mode == "Workshop" else "Purple"
+                if self.red_override:
+                    stream.add_message(f"[dim]Lens: [red1]{LENS_RED}[/red1] Red (override active)[/dim]", "system")
+                    stream.add_message(f"[dim]  /lens default — return to {mode_default}[/dim]", "system")
+                else:
+                    glyph = LENS_BLUE if current == "Blue" else LENS_PURPLE
+                    color = "dodger_blue1" if current == "Blue" else "medium_purple"
+                    stream.add_message(f"[dim]Lens: [{color}]{glyph}[/{color}] {current} (from {self.session_mode})[/dim]", "system")
+                    stream.add_message(f"[dim]  /lens red — reduce verbosity and initiative[/dim]", "system")
+            else:
+                # /lens default or /lens reset
+                self.red_override = False
+                self._apply_lens_to_ui()
+                mode_default = "Blue" if self.session_mode == "Workshop" else "Purple"
+                glyph = LENS_BLUE if mode_default == "Blue" else LENS_PURPLE
+                color = "dodger_blue1" if mode_default == "Blue" else "medium_purple"
+                stream.add_message(f"[dim][{color}]{glyph}[/{color}] Lens reset to {mode_default}[/dim]", "system")
+        else:
+            stream.add_message(f"[yellow]Unknown lens: {arg}[/yellow]", "system")
+            stream.add_message("[dim]Try: /lens red, /lens default[/dim]", "system")
+
+    async def _dispatch_command(self, msg_lower: str, message: str, stream) -> bool:
+        """Dispatch slash commands via registry. Returns True if command was handled.
+
+        This replaces the long if/elif chain with dict-based dispatch.
+        Commands are grouped by type:
+        - exact_sync: exact match, synchronous handler
+        - exact_async: exact match, async handler
+        - prefix_sync: prefix match, synchronous handler (receives full message)
+        - prefix_async: prefix match, async handler (receives full message)
+        """
+        # Exact match, sync handlers (no args needed)
+        exact_sync = {
+            "/help": lambda: self.action_show_help(),
+            "/clear": lambda: self.action_clear_chat(),
+            "/save": lambda: self._cmd_save(stream),
+            "/models": lambda: self.action_models(),
+            "/profiles": lambda: self.action_profiles(),
+            "/monitor": lambda: self._cmd_monitor(stream),
+            "/editor": lambda: self._cmd_editor(stream),
+            "/session": lambda: self._cmd_session(stream),
+            "/context": lambda: self._cmd_context(stream),
+            "/screenshot": lambda: self._handle_screenshot_command(),
+        }
+
+        if msg_lower in exact_sync:
+            exact_sync[msg_lower]()
+            return True
+
+        # Prefix match, sync handlers (need full message)
+        prefix_sync = {
+            "/lens": lambda: self._cmd_lens(message, stream),
+            "/seat": lambda: self._handle_seat_command(message),
+        }
+
+        for prefix, handler in prefix_sync.items():
+            if msg_lower.startswith(prefix):
+                handler()
+                return True
+
+        # Prefix match, async handlers (need full message)
+        prefix_async = {
+            "/open": self._handle_open_command,
+            "/bookmark": self._cmd_bookmark,
+            "/memory": self._handle_memory_command,
+            "/council": self._handle_council_command,
+            "/ask-gemini": lambda msg: self._handle_ask_seat_command(msg, "gemini"),
+            "/ask-codex": lambda msg: self._handle_ask_seat_command(msg, "codex"),
+            "/ask-claude": lambda msg: self._handle_ask_seat_command(msg, "claude"),
+        }
+
+        for prefix, handler in prefix_async.items():
+            if msg_lower.startswith(prefix):
+                await handler(message)
+                return True
+
+        return False
+
+    async def _cmd_bookmark(self, message: str) -> None:
+        """Handle /bookmark command - wrapper for initiate_bookmark_weave."""
+        parts = message.split(maxsplit=1)
+        bookmark_name = parts[1] if len(parts) > 1 else None
+        await self.initiate_bookmark_weave(preset_name=bookmark_name)
+
     async def _handle_open_command(self, message: str) -> None:
         """Handle /open command family for file/folder/shortcut launching.
 
@@ -5248,153 +5395,13 @@ class SovwrenIDE(App):
                         self.conversation_history.pop()
                     return
 
-                # Help command
-                if msg_lower == "/help":
-                    self.action_show_help()
+                # Dispatch slash commands via registry
+                if await self._dispatch_command(msg_lower, message, stream):
                     if self.conversation_history and self.conversation_history[-1] == ("steward", message):
                         self.conversation_history.pop()
                     return
 
-                # Clear command
-                if msg_lower == "/clear":
-                    self.action_clear_chat()
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # Save command
-                if msg_lower == "/save":
-                    self.action_save_file()
-                    stream.add_message("[dim]File saved.[/dim]", "system")
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # Models command
-                if msg_lower == "/models":
-                    self.action_models()
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # Profiles command
-                if msg_lower == "/profiles":
-                    self.action_profiles()
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # Monitor command - focus dock Monitor tab
-                if msg_lower == "/monitor":
-                    self.add_class("dock-visible")
-                    try:
-                        dock_tabs = self.query_one("#dock-tabs", TabbedContent)
-                        dock_tabs.active = "dock-monitor"
-                        stream.add_message("[dim]Monitor opened.[/dim]", "system")
-                    except Exception:
-                        stream.add_message("[yellow]Dock not available.[/yellow]", "system")
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # Editor command - focus dock Editor tab
-                if msg_lower == "/editor":
-                    self.add_class("dock-visible")
-                    try:
-                        dock_tabs = self.query_one("#dock-tabs", TabbedContent)
-                        dock_tabs.active = "dock-editor"
-                        stream.add_message("[dim]Editor opened.[/dim]", "system")
-                    except Exception:
-                        stream.add_message("[yellow]Dock not available.[/yellow]", "system")
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # Session command - show session info
-                if msg_lower == "/session":
-                    session_name = self.session_name or "Unnamed"
-                    session_id = self.session_id or "None"
-                    exchanges = self._exchange_count if hasattr(self, '_exchange_count') else 0
-                    stream.add_message(f"[dim]Session: {session_name}[/dim]", "system")
-                    stream.add_message(f"[dim]ID: {session_id[:8]}... | Exchanges: {exchanges}[/dim]", "system")
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # Context command - show context info
-                if msg_lower == "/context":
-                    history_turns = len(self.conversation_history)
-                    band = self._context_band if hasattr(self, '_context_band') else "unknown"
-                    rag_chunks = len(self.rag_chunks_loaded) if hasattr(self, 'rag_chunks_loaded') else 0
-                    stream.add_message(f"[dim]Context band: {band}[/dim]", "system")
-                    stream.add_message(f"[dim]History: {history_turns} turns | RAG chunks: {rag_chunks}[/dim]", "system")
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # /lens command - Red override toggle
-                if msg_lower.startswith("/lens"):
-                    parts = message.strip().split(maxsplit=1)
-                    arg = parts[1].lower() if len(parts) > 1 else ""
-
-                    if arg == "red":
-                        self.red_override = True
-                        self._apply_lens_to_ui()
-                        stream.add_message(f"[dim][red1]{LENS_RED}[/red1] Red override active — reduced verbosity[/dim]", "system")
-                    elif arg in ("default", "reset", ""):
-                        if arg == "":
-                            # Just /lens - show current state
-                            current = self.session_lens
-                            mode_default = "Blue" if self.session_mode == "Workshop" else "Purple"
-                            if self.red_override:
-                                stream.add_message(f"[dim]Lens: [red1]{LENS_RED}[/red1] Red (override active)[/dim]", "system")
-                                stream.add_message(f"[dim]  /lens default — return to {mode_default}[/dim]", "system")
-                            else:
-                                glyph = LENS_BLUE if current == "Blue" else LENS_PURPLE
-                                color = "dodger_blue1" if current == "Blue" else "medium_purple"
-                                stream.add_message(f"[dim]Lens: [{color}]{glyph}[/{color}] {current} (from {self.session_mode})[/dim]", "system")
-                                stream.add_message(f"[dim]  /lens red — reduce verbosity and initiative[/dim]", "system")
-                        else:
-                            # /lens default or /lens reset
-                            self.red_override = False
-                            self._apply_lens_to_ui()
-                            mode_default = "Blue" if self.session_mode == "Workshop" else "Purple"
-                            glyph = LENS_BLUE if mode_default == "Blue" else LENS_PURPLE
-                            color = "dodger_blue1" if mode_default == "Blue" else "medium_purple"
-                            stream.add_message(f"[dim][{color}]{glyph}[/{color}] Lens reset to {mode_default}[/dim]", "system")
-                    else:
-                        stream.add_message(f"[yellow]Unknown lens: {arg}[/yellow]", "system")
-                        stream.add_message("[dim]Try: /lens red, /lens default[/dim]", "system")
-
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # /open command family - file/folder/shortcut launching
-                if msg_lower.startswith("/open"):
-                    await self._handle_open_command(message)
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # /screenshot - export UI as SVG
-                if msg_lower == "/screenshot":
-                    self._handle_screenshot_command()
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # Bookmark command - with optional name
-                if msg_lower.startswith("/bookmark"):
-                    # Extract optional name from /bookmark <name>
-                    parts = message.split(maxsplit=1)
-                    bookmark_name = parts[1] if len(parts) > 1 else None
-                    await self.initiate_bookmark_weave(preset_name=bookmark_name)
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return
-
-                # Check if this is a memory store command
+                # Memory store prefix commands (not slash commands)
                 if msg_lower.startswith(('remember:', 'store:', 'save:')):
                     content = message.split(':', 1)[1].strip() if ':' in message else message
                     # Simple entity extraction
@@ -5413,44 +5420,12 @@ class SovwrenIDE(App):
                         await self._refresh_memory_display()
                     else:
                         stream.add_message("[red]✗ Failed to store memory[/red]", "error")
-                    # This command never went to the Node; don't poison "recent conversation" context with it.
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return  # Don't send memory commands to LLM
-
-                # /memory command family
-                if msg_lower.startswith('/memory'):
-                    await self._handle_memory_command(message)
                     if self.conversation_history and self.conversation_history[-1] == ("steward", message):
                         self.conversation_history.pop()
                     return
-
-                # Check if this is a /council command
-                elif msg_lower.startswith('/council'):
-                    await self._handle_council_command(message)
-                    return  # Council command handled separately
-
-                # Check if this is a single-seat /ask-* command
-                elif msg_lower.startswith('/ask-gemini'):
-                    await self._handle_ask_seat_command(message, "gemini")
-                    return
-                elif msg_lower.startswith('/ask-codex'):
-                    await self._handle_ask_seat_command(message, "codex")
-                    return
-                elif msg_lower.startswith('/ask-claude'):
-                    await self._handle_ask_seat_command(message, "claude")
-                    return
-
-                # Check if this is a /seat command (Council model switching)
-                elif msg_lower.startswith('/seat'):
-                    self._handle_seat_command(message)
-                    # Remove from conversation history
-                    if self.conversation_history and self.conversation_history[-1] == ("steward", message):
-                        self.conversation_history.pop()
-                    return  # Seat command handled
 
                 # Check if asking about memories
-                elif any(p in msg_lower for p in ['what do you remember', 'what did i tell', 'do you know']):
+                if any(p in msg_lower for p in ['what do you remember', 'what did i tell', 'do you know']):
                     memories = await self.read_memories_direct()
                     if memories:
                         mem = "Known memories:\n"

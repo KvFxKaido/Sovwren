@@ -121,33 +121,42 @@ class OllamaClient:
             print(f"Failed to switch to model '{target_model}' - model not responding")
             return False
 
-    async def generate(self, prompt: str, model: Optional[str] = None, 
+    async def generate(self, prompt: str, model: Optional[str] = None,
                       stream: bool = True, system_prompt: Optional[str] = None,
-                      context: Optional[str] = None) -> Optional[str]:
-        """Generate response from Ollama"""
+                      context: Optional[str] = None,
+                      conversation_history: Optional[List[Tuple[str, str]]] = None) -> Optional[str]:
+        """Generate response from Ollama.
+
+        When conversation_history is provided, uses the chat API for proper
+        multi-turn conversations. Otherwise uses the generate API.
+        """
         model = model or self.current_model
         start_time = time.time()
-        
+
         # Check connection first
         if not await self._check_ollama_connection():
             print("Ollama is not running or not accessible")
             return None
-        
-        # Build the full prompt with context injection
-        full_prompt = self._build_prompt(prompt, context, system_prompt)
-        
+
         try:
-            if stream:
-                response = await self._generate_streaming(full_prompt, model)
+            # Use chat API when we have conversation history (for proper multi-turn)
+            if conversation_history:
+                messages = self._build_messages(prompt, context, system_prompt, conversation_history)
+                response = await self._chat_generate(messages, model, stream)
             else:
-                response = await self._generate_non_streaming(full_prompt, model)
-            
+                # Single-shot generation
+                full_prompt = self._build_prompt(prompt, context, system_prompt)
+                if stream:
+                    response = await self._generate_streaming(full_prompt, model)
+                else:
+                    response = await self._generate_non_streaming(full_prompt, model)
+
             # Record model usage statistics
             response_time = time.time() - start_time
             await db.update_model_stats(model, response_time)
-            
+
             return response
-            
+
         except asyncio.TimeoutError:
             print(f"Timeout after {TIMEOUTS['ollama_response']}s")
             return None
@@ -155,25 +164,70 @@ class OllamaClient:
             print(f"Error generating response: {e}")
             return None
 
-    def _build_prompt(self, user_prompt: str, context: Optional[str] = None, 
+    def _build_prompt(self, user_prompt: str, context: Optional[str] = None,
                      system_prompt: Optional[str] = None) -> str:
         """Build enhanced prompt with context injection"""
         parts = []
-        
+
         # Add system prompt if provided
         if system_prompt:
             parts.append(f"System: {system_prompt}")
-        
+
         # Add context if available (this is the RAG magic!)
         if context and context.strip():
             parts.append("Context Information:")
             parts.append(context)
             parts.append("\nBased on the above context and your knowledge, please answer the following question:")
-        
+
         # Add user prompt
         parts.append(f"Question: {user_prompt}")
-        
+
         return "\n\n".join(parts)
+
+    def _build_messages(self, user_prompt: str, context: Optional[str] = None,
+                       system_prompt: Optional[str] = None,
+                       conversation_history: Optional[List[Tuple[str, str]]] = None) -> List[Dict[str, str]]:
+        """Build messages array for chat API (used when conversation history exists)."""
+        messages = []
+
+        # Add system prompt if provided
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+
+        # Add conversation history as proper role-labeled messages
+        if conversation_history:
+            for role, content in conversation_history:
+                if role == "steward":
+                    messages.append({"role": "user", "content": content})
+                elif role == "node":
+                    messages.append({"role": "assistant", "content": content})
+                # Skip council or other roles
+
+        # Build current user message with context
+        user_content = ""
+        if context and context.strip():
+            user_content = f"Context Information:\n{context}\n\n"
+        user_content += user_prompt
+        messages.append({"role": "user", "content": user_content})
+
+        return messages
+
+    async def _chat_generate(self, messages: List[Dict[str, str]], model: str, stream: bool) -> Optional[str]:
+        """Generate response using chat API (for multi-turn conversations)."""
+        request_data = {
+            "model": model,
+            "messages": messages,
+            "stream": stream
+        }
+
+        try:
+            if stream:
+                return await self._chat_streaming(request_data)
+            else:
+                return await self._chat_non_streaming(request_data)
+        except Exception as e:
+            print(f"Chat generate error: {e}")
+            return None
 
     async def _generate_streaming(self, prompt: str, model: str) -> Optional[str]:
         """Generate streaming response"""

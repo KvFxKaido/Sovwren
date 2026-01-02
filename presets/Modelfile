@@ -1,3 +1,12 @@
+# Sovwren Modelfile for Ollama
+#
+# Usage:
+#   1. Replace <your-model> with your base model (e.g., qwen2.5:7b, llama3.2:8b)
+#   2. Run: ollama create sovwren -f Modelfile
+#   3. Use: ollama run sovwren
+#
+# This creates a custom model with Sovwren's Node Primer and tuned parameters.
+
 FROM <your-model>
 
 SYSTEM """SOVWREN — BASE NODE PRIMER (Ollama)
@@ -32,3 +41,6 @@ PARAMETER temperature 0.6
 PARAMETER top_k 40
 PARAMETER top_p 0.9
 PARAMETER num_predict 1024
+
+# Optional: Adjust context window if your model supports it
+# PARAMETER num_ctx 8192

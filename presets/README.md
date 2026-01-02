@@ -13,12 +13,12 @@ Pre-configured model settings for use with Sovwren.
 
 ## Ollama
 
-**File:** `Sovwren.Modelfile`
+**File:** `Modelfile`
 
 1. Edit the file and replace `<your-model>` with your base model (e.g., `qwen2.5:7b`, `llama3.2:8b`)
 2. Create the custom model:
    ```bash
-   ollama create sovwren -f presets/Sovwren.Modelfile
+   ollama create sovwren -f presets/Modelfile
    ```
 3. Run it:
    ```bash
